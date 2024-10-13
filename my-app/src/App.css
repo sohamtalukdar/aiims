@@ -1,22 +1,45 @@
+/* General styles for both pages */
 .app {
+  position: relative;
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #f0f4f8;
+  background-color: #FFFFFF;  /* White base */
+  overflow: hidden;  /* Hide overflow from gradient */
 }
 
+/* Gradient background with smooth transition into white */
+.gradient-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 400px;  /* Adjust this height based on the size of the gradient */
+  background: linear-gradient(
+    180deg,
+    #0449A7 0%,
+    #94B4DE 50%,
+    rgba(255, 35, 34, 0.2) 75%,
+    transparent 100%
+  );
+  z-index: 1;  /* Keep the gradient behind the form */
+}
+
+/* Container for form and content */
 .container {
-  background-color: white;
+  background-color: #FFFFFF;
   padding: 2rem;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   text-align: center;
+  z-index: 2;  /* Ensure content is above the gradient */
 }
 
+/* Form styling */
 h1 {
   font-size: 2rem;
-  color: #333;
+  color: #0449A7; /* Dark Blue for headings */
   margin-bottom: 1rem;
 }
 
@@ -24,13 +47,13 @@ input {
   width: 100%;
   padding: 0.75rem;
   margin-bottom: 1rem;
-  border: 1px solid #ccc;
+  border: 1px solid #94B4DE; /* Light Blue border */
   border-radius: 5px;
 }
 
 button {
-  background-color: #007bff;
-  color: white;
+  background-color: #0449A7; /* Dark Blue for buttons */
+  color: #FFFFFF;
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: 5px;
@@ -39,5 +62,5 @@ button {
 }
 
 button:hover {
-  background-color: #0056b3;
+  background-color: #033977; /* Slightly darker blue on hover */
 }
