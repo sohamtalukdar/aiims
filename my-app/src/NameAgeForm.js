@@ -1,4 +1,3 @@
-// src/NameAgeForm.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -7,14 +6,32 @@ function NameAgeForm() {
   const [age, setAge] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    navigate('/upload', { state: { name, age } });
+
+    // Sending data to the backend (Express server)
+    try {
+      const response = await fetch('http://localhost:5000/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, age }),  // Send the form data as JSON
+      });
+
+      const data = await response.json();
+      console.log(data.message);  // Success message from the backend
+
+      // Redirect or show confirmation
+      navigate('/upload', { state: { name, age } });
+    } catch (error) {
+      console.error('Error:', error);
+    }
   };
 
   return (
     <div className="app">
-      <div className="gradient-bg"></div>  {/* Gradient background */}
+      <div className="gradient-bg"></div>
       <div className="container">
         <h1>Enter Your Name and Age</h1>
         <form onSubmit={handleSubmit}>
@@ -32,7 +49,7 @@ function NameAgeForm() {
             onChange={(e) => setAge(e.target.value)}
             required
           />
-          <button type="submit">Next</button>
+          <button type="submit">Submit</button>
         </form>
       </div>
     </div>
