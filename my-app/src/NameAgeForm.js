@@ -8,26 +8,26 @@ function NameAgeForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Sending data to the backend (Express server)
+    console.log("Submit button clicked");  // Add this line to confirm button click
+  
     try {
-      const response = await fetch('http://localhost:5000/save', {
+      const response = await fetch('http://localhost:5001/save', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, age }),  // Send the form data as JSON
+        body: JSON.stringify({ name, age }),
       });
-
+  
       const data = await response.json();
-      console.log(data.message);  // Success message from the backend
-
-      // Redirect or show confirmation
+      console.log(data.message);
+  
       navigate('/upload', { state: { name, age } });
     } catch (error) {
       console.error('Error:', error);
     }
   };
+  
 
   return (
     <div className="app">
