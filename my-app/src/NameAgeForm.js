@@ -32,7 +32,7 @@ function NameAgeForm() {
   return (
     <div className="app">
       <div className="gradient-bg"></div>
-      <div className="container">
+      <div className="container name-age-form-container">
         <h1>Enter Your Name and Age</h1>
         <form onSubmit={handleSubmit}>
           <input
@@ -49,7 +49,7 @@ function NameAgeForm() {
             onChange={(e) => setAge(e.target.value)}
             required
           />
-          <button type="submit">Submit</button>
+          <button type="submit" className="submit-button">Submit</button>
         </form>
       </div>
     </div>
