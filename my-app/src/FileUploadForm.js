@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import './App.css'; // Ensure you're importing your app.css
+import './App.css';
 
 function FileUploadForm() {
   const { state } = useLocation();
@@ -15,7 +15,10 @@ function FileUploadForm() {
   const tasks = [
     {
       id: 0,
-      title: '1st Task',
+      title: {
+        hindi: 'पहला कार्य',
+        english: '1st Task'
+      },
       paragraph: {
         hindi: `एक बार की बात है, एक छोटे से गाँव में, एक प्यारी सी बच्ची रहती थी। उसका नाम नीता था। नीता बचपन से ही बहुत ही समझदार थी। वह हमेशा अपने दादी के साथ खेलती और बातें करती थी। 
                 एक दिन, नीता के पास एक खास खिलौना आया। यह एक सुंदर सा किताब था, जिसमें फूलों के बारे में बहुत सी ख़ूबसूरत तस्वीरें थीं। नीता ने दादी के साथ उस किताब को देखकर खुशी-खुशी पढ़ना शुरू किया। 
@@ -29,11 +32,11 @@ function FileUploadForm() {
     },
     {
       id: 1,
-      title: '2nd Task',
-      paragraph: {
-        hindi: 'यह दूसरी कार्य के लिए अनुच्छेद है।',
-        english: 'This is the paragraph for the 2nd task.'
-      }
+      title: {
+        hindi: 'दूसरा कार्य',
+        english: '2nd Task'
+      },
+      image: '/image.png',
     },
   ];
 
@@ -116,8 +119,36 @@ function FileUploadForm() {
           in whichever language you’re comfortable with. Once you finish reading,
           click "Stop Recording" and then "Submit" to save your recording.
         </p>
-        <button className="custom-ok-button" onClick={onClose}>OK</button> {/* OK button to close modal */}
+        <button className="custom-ok-button" onClick={onClose}>OK</button>
       </div>
+    </div>
+  );
+
+  // TaskContent component to render task content consistently
+  const TaskContent = ({ task }) => (
+    <div className="task-content">
+      {task.image ? (
+        <img
+          src={task.image}
+          alt="Task"
+          style={{
+            maxWidth: '100%',
+            maxHeight: '100%',
+            objectFit: 'contain',
+          }}  
+        />
+      ) : (
+        <p
+          style={{
+            width: '60%',
+            margin: '0 auto',
+            lineHeight: '1.8',
+            fontSize: '1.1em',
+          }}
+        >
+          {task.paragraph[language]}
+        </p>
+      )}
     </div>
   );
 
@@ -134,7 +165,7 @@ function FileUploadForm() {
               className={`tab ${selectedTab === task.id ? 'active' : ''}`}
               onClick={() => handleTabClick(task.id)}
             >
-              {task.title}
+              {task.title[language]}
             </div>
           ))}
         </div>
@@ -142,7 +173,6 @@ function FileUploadForm() {
         <div className="content">
           <button
             onClick={toggleLanguage}
-            onMouseDown={(e) => e.preventDefault()}
             style={{
               marginBottom: '10px',
               padding: '8px 12px',
@@ -153,15 +183,24 @@ function FileUploadForm() {
               borderRadius: '4px',
             }}
           >
-            Switch to {language === 'hindi' ? 'English' : 'Hindi'}
+            {language === 'hindi' ? 'Switch to English' : 'हिंदी पर स्विच करें'}
           </button>
 
-          <h1>{tasks[selectedTab].title}</h1>
-          <p style={{ textAlign: 'center', width: '60%', margin: '0 auto', lineHeight: '1.8', fontSize: '1.1em' }}>
-            {tasks[selectedTab].paragraph[language]}
-          </p>
+          <h1 className="task-title">{tasks[selectedTab].title[language]}</h1>
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px', marginTop: '20px' }}>
+          {/* Render task content consistently */}
+          <TaskContent task={tasks[selectedTab]} />
+
+          <form
+            onSubmit={handleSubmit}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '15px',
+              marginTop: '20px',
+            }}
+          >
             <div className="audio-controls">
               {audioURL ? (
                 <>
@@ -174,7 +213,7 @@ function FileUploadForm() {
                 </button>
               )}
             </div>
-            
+
             <button type="submit" disabled={!audioURL}>Submit</button>
           </form>
         </div>

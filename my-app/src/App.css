@@ -1,21 +1,22 @@
-/* General styles for both pages */
+/* General app styling */
 .app {
   position: relative;
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #FFFFFF;  /* White base */
-  overflow: hidden;  /* Hide overflow from gradient */
+  background-color: #FFFFFF;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
 }
 
-/* Gradient background with smooth transition into white */
+/* Gradient background */
 .gradient-bg {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 400px;  /* Adjust this height based on the size of the gradient */
+  height: 400px;
   background: linear-gradient(
     180deg,
     #0449A7 0%,
@@ -23,65 +24,42 @@
     rgba(255, 35, 34, 0.2) 75%,
     transparent 100%
   );
-  z-index: 1;  /* Keep the gradient behind the form */
+  z-index: 1;
 }
 
-/* Container for form and content */
+/* Main container */
 .container {
+  position: relative;
+  z-index: 2;
   background-color: #FFFFFF;
   padding: 2rem;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  z-index: 2;  /* Ensure content is above the gradient */
+  width: 80%;
+  max-width: 1000px;
+  display: flex;
+  gap: 20px;
 }
 
-/* Form styling */
-h1 {
-  font-size: 2rem;
-  color: #0449A7; /* Dark Blue for headings */
-  margin-bottom: 1rem;
-}
-
-input {
-  width: 100%;
-  padding: 0.75rem;
-  margin-bottom: 1rem;
-  border: 1px solid #94B4DE; /* Light Blue border */
-  border-radius: 5px;
-}
-
-button {
-  background-color: #0449A7; /* Dark Blue for buttons */
-  color: #FFFFFF;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 1rem;
-}
-
-button:hover {
-  background-color: #033977; /* Slightly darker blue on hover */
-}
-
-
-/* App.css */
+/* Tabs section */
 .tabs {
-  float: left;
-  width: 20%;
-  padding: 10px;
+  width: 25%;
   background-color: #f4f4f4;
+  padding: 10px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
 }
 
 .tab {
-  padding: 10px;
-  margin-bottom: 5px;
-  cursor: pointer;
-  background-color: #fff;
+  padding: 12px;
+  margin-bottom: 10px;
+  background-color: #ffffff;
   border: 1px solid #ddd;
+  border-radius: 5px;
   text-align: center;
-  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
 }
 
 .tab.active {
@@ -89,49 +67,108 @@ button:hover {
   color: white;
 }
 
+/* Content section */
 .content {
-  float: right;
   width: 75%;
   padding: 20px;
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  min-height: 500px; /* Ensure consistent height for the content area */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
+.task-title {
+  font-size: 1.5rem;
+  color: #0449A7;
+  margin-bottom: 1rem;
+}
+
+/* Task content styling for images and paragraphs */
+.task-content {
+  width: 100%;
+  max-width: 600px;
+  text-align: center;
+}
+
+.task-content img {
+  width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+  border-radius: 5px;
+}
+
+.task-content p {
+  font-size: 1.1em;
+  line-height: 1.8;
+  color: #333;
+}
+
+/* Language toggle button */
+.language-toggle {
+  margin-bottom: 20px;
+  padding: 8px 12px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s;
+}
+
+.language-toggle:hover {
+  background-color: #0056b3;
+}
+
+/* Audio controls styling */
 .audio-controls {
   margin-top: 20px;
-}
-
-button {
-  margin-top: 20px;
-}
-
-.audio-controls {
   display: flex;
   align-items: center;
-  gap: 10px; /* Space between audio player and buttons */
-  margin-top: 10px; /* Optional: space above the controls */
+  gap: 15px;
 }
 
 .audio-controls button {
   padding: 8px 12px;
-  font-size: 16px;
+  font-size: 1rem;
+  background-color: #0449A7;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 5px;
   cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.audio-controls button:hover {
+  background-color: #033977;
 }
 
 .audio-controls audio {
   outline: none;
 }
 
-
-/* Container to ensure text is centered within it */
-.content p {
-  text-align: center; /* Centers text horizontally */
-  width: 60%; /* Optional: controls paragraph width */
-  margin: 0 auto; /* Centers the paragraph block */
-  line-height: 1.8; /* Improves readability with line spacing */
-  font-size: 1.1em; /* Optional: adjusts font size for readability */
+/* Submit button styling */
+.submit-button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #0449A7;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
 }
 
+.submit-button:hover {
+  background-color: #033977;
+}
 
-/* Modal Styles */
+/* Modal overlay */
 .custom-modal-overlay {
   position: fixed;
   top: 0;
@@ -142,31 +179,43 @@ button {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999; /* Ensures modal is on top */
+  z-index: 9999;
 }
 
 .custom-modal-content {
-  position: relative;
-  background: #ffffff; /* Modal content has a white background */
+  background: #ffffff;
   padding: 20px;
   border-radius: 8px;
   text-align: center;
   max-width: 500px;
   width: 80%;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Adds shadow */
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.custom-close-button {
-  position: absolute;
-  top: 10px;
-  left: 15px; /* Positioning the close button in the top-left corner */
-  background: transparent;
+/* Close button for modal */
+.custom-ok-button {
+  margin-top: 15px;
+  padding: 8px 16px;
+  background-color: #0449A7;
+  color: #ffffff;
   border: none;
-  font-size: 24px;
+  border-radius: 5px;
   cursor: pointer;
-  font-weight: bold;
+  font-size: 1rem;
 }
 
-.custom-close-button:hover {
-  color: #ff0000; /* Turns red when hovered */
+.custom-ok-button:hover {
+  background-color: #033977;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    width: 90%;
+  }
+
+  .tabs, .content {
+    width: 100%;
+  }
 }
