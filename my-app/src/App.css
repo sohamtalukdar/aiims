@@ -330,3 +330,89 @@
   object-fit: contain;
   cursor: pointer; /* To indicate click-to-close functionality */
 }
+
+
+/* Initial Popup Styles */
+.initial-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.initial-popup-content {
+  background-color: #fff;
+  padding: 30px;
+  width: 80%;
+  max-width: 600px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.initial-popup-content h2 {
+  font-size: 2em;
+  margin-bottom: 20px;
+}
+
+.initial-popup-content p {
+  font-size: 1.2em;
+  color: #333;
+}
+
+.language-selection {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.language-button {
+  padding: 10px 20px;
+  margin: 0 10px;
+  cursor: pointer;
+  background-color: transparent;
+  border: 2px solid #007bff;
+  border-radius: 5px;
+  font-size: 1em;
+  color: #007bff;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.language-button.active {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.language-button:hover {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.begin-test-button {
+  padding: 12px 24px;
+  font-size: 1.2em;
+  background-color: #28a745;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.begin-test-button:hover {
+  background-color: #218838;
+}
+
+/* Other Styles (if needed) */
+.custom-ok-button {
+  margin-top: 20px;
+}
+
+.tab.disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
