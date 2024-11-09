@@ -1,7 +1,5 @@
 // server.js
-
 const express = require('express');
-//const bodyParser = require('body-parser');
 const cors = require('cors');
 const { Pool } = require('pg');
 const multer = require('multer');
@@ -11,130 +9,153 @@ const fs = require('fs');
 const app = express();
 const port = 5001;
 
-// Middleware
-//app.use(bodyParser.json());
 app.use(cors());
+app.use(express.json());
 
-// Ensure 'uploads/' folder exists
 const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)){
-    fs.mkdirSync(uploadDir);
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true, mode: 0o755 });
 }
 
-// Multer configuration for saving files to disk
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/');  // Ensure 'uploads/' folder exists in project root
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
-  },
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const filename = `${file.fieldname}-${uniqueSuffix}.webm`;
+    console.log('Generating filename for', file.fieldname + ':', filename);
+    cb(null, filename);
+  }
 });
 
-// Adjust multer to handle multiple file fields
 const upload = multer({
   storage: storage,
-  limits: {
-    fieldSize: 2 * 1024 * 1024, // 2 MB (adjust as needed)
-  },
-});
+  limits: { fileSize: 10 * 1024 * 1024 }
+}).fields([
+  { name: 'audio', maxCount: 1 },
+  { name: 'video', maxCount: 1 }
+]);
 
-
-// PostgreSQL connection setup using environment variables
 const pool = new Pool({
-  user: process.env.POSTGRES_USER || 'sohamtalukdar',        // PostgreSQL user
-  host: process.env.DB_HOST || 'localhost',                      // Database host
-  database: process.env.POSTGRES_DB || 'user_audio_db',          // Database name
-  password: process.env.POSTGRES_PASSWORD || 'soham@123',    // PostgreSQL password
-  port: process.env.DB_PORT || 5432,                             // Default PostgreSQL port
+  user: process.env.POSTGRES_USER || 'sohamtalukdar',
+  host: process.env.DB_HOST || 'localhost',
+  database: process.env.POSTGRES_DB || 'user_audio_db',
+  password: process.env.POSTGRES_PASSWORD || 'soham@123',
+  port: process.env.DB_PORT || 5432,
 });
 
-// API endpoint to handle POST request and save data with or without audio/video
-app.post('/save', upload.fields([{ name: 'audio', maxCount: 1 }, { name: 'video', maxCount: 1 }]), async (req, res) => {
-  console.log('req.body:', req.body); // Add this line
-  console.log('req.files:', req.files); // Add this line
-  console.log('Received request to save user');
-  const { name, age } = req.body;
-  let audioFile = null;
-  let videoFile = null;
-
-  if (req.files) {
-    if (req.files.audio && req.files.audio.length > 0) {
-      audioFile = req.files.audio[0];
+app.post('/save', (req, res) => {
+  upload(req, res, async (err) => {
+    if (err) {
+      console.error('Upload error:', err);
+      return res.status(400).json({ error: err.message });
     }
-    if (req.files.video && req.files.video.length > 0) {
-      videoFile = req.files.video[0];
-    }
-  }
 
-  console.log('Received request to save user');
-  console.log('Name:', name);
-  console.log('Age:', age);
+    try {
+      console.log('Request body:', req.body);
+      console.log('Request files:', req.files);
 
-  if (!name || !age) {
-    console.error('Missing required fields');
-    return res.status(400).json({ error: 'Name and age are required.' });
-  }
-
-  try {
-    // Check if a record with the same name exists
-    const existingUserQuery = 'SELECT * FROM user_audio WHERE name = $1';
-    const existingUserResult = await pool.query(existingUserQuery, [name]);
-
-    // If the user already exists, delete the old entry and remove the file
-    // If the user already exists, update their record
-    if (existingUserResult.rows.length > 0) {
-      const existingUser = existingUserResult.rows[0];
-
-      // Delete old audio file if a new one is uploaded
-      if (audioFile && existingUser.audio && fs.existsSync(existingUser.audio)) {
-        fs.unlinkSync(existingUser.audio);
-        console.log('Old audio file deleted:', existingUser.audio);
+      const { name, age } = req.body;
+      if (!name || !age) {
+        throw new Error('Name and age are required');
       }
 
-      // Delete old video file if a new one is uploaded
-      if (videoFile && existingUser.video && fs.existsSync(existingUser.video)) {
-        fs.unlinkSync(existingUser.video);
-        console.log('Old video file deleted:', existingUser.video);
+      // Get existing user data
+      const existingUser = await pool.query(
+        'SELECT * FROM user_audio WHERE name = $1',
+        [name]
+      );
+
+      // Initialize paths with existing values or null
+      let audioPath = existingUser.rows.length > 0 ? existingUser.rows[0].audio : null;
+      let videoPath = existingUser.rows.length > 0 ? existingUser.rows[0].video : null;
+
+      // Handle audio file update if present
+      if (req.files.audio && req.files.audio[0]) {
+        // Only delete old audio file if we're updating audio
+        if (audioPath && fs.existsSync(audioPath)) {
+          console.log('Deleting old audio file:', audioPath);
+          fs.unlinkSync(audioPath);
+        }
+        audioPath = req.files.audio[0].path;
+        console.log('New audio file path:', audioPath);
       }
 
-      // Update the existing record
-      const updateQuery = `
-        UPDATE user_audio
-        SET age = $2,
-            audio = COALESCE($3, audio),
-            video = COALESCE($4, video)
-        WHERE name = $1
-      `;
-      await pool.query(updateQuery, [
-        name,
-        age,
-        audioFile ? audioFile.path : null,
-        videoFile ? videoFile.path : null,
-      ]);
-      console.log('Updated existing database record for user:', name);
-    } else {
-      // Insert the new entry
-      const insertQuery = 'INSERT INTO user_audio (name, age, audio, video) VALUES ($1, $2, $3, $4)';
-      await pool.query(insertQuery, [
-        name,
-        age,
-        audioFile ? audioFile.path : null,
-        videoFile ? videoFile.path : null,
-      ]);
-      console.log('User data inserted successfully');
-    }
+      // Handle video file update if present
+      if (req.files.video && req.files.video[0]) {
+        // Only delete old video file if we're updating video
+        if (videoPath && fs.existsSync(videoPath)) {
+          console.log('Deleting old video file:', videoPath);
+          fs.unlinkSync(videoPath);
+        }
+        videoPath = req.files.video[0].path;
+        console.log('New video file path:', videoPath);
+      }
 
-    res.status(201).json({ message: 'User and media saved successfully!' });
-  } catch (error) {
-    console.error('Error saving data:', error);
-    res.status(500).json({ error: 'Database error' });
-  }
+      let result;
+      if (existingUser.rows.length > 0) {
+        // Create update query based on what's being updated
+        let updateQuery = 'UPDATE user_audio SET age = $1';
+        let queryParams = [age];
+        let paramCount = 1;
+
+        // Only include audio in update if it's being updated
+        if (req.files.audio) {
+          updateQuery += `, audio = $${++paramCount}`;
+          queryParams.push(audioPath);
+        }
+
+        // Only include video in update if it's being updated
+        if (req.files.video) {
+          updateQuery += `, video = $${++paramCount}`;
+          queryParams.push(videoPath);
+        }
+
+        updateQuery += ` WHERE name = $${++paramCount} RETURNING *`;
+        queryParams.push(name);
+
+        result = await pool.query(updateQuery, queryParams);
+        console.log('Updated record:', result.rows[0]);
+      } else {
+        // Insert new record
+        const insertQuery = `
+          INSERT INTO user_audio (name, age, audio, video)
+          VALUES ($1, $2, $3, $4)
+          RETURNING *
+        `;
+        
+        result = await pool.query(insertQuery, [name, age, audioPath, videoPath]);
+        console.log('Inserted new record:', result.rows[0]);
+      }
+
+      res.status(201).json({
+        message: 'Saved successfully',
+        files: {
+          audio: audioPath,
+          video: videoPath
+        }
+      });
+
+    } catch (error) {
+      console.error('Error:', error);
+      // Clean up any newly uploaded files if there was an error
+      if (req.files) {
+        Object.values(req.files).forEach(files => {
+          files.forEach(file => {
+            if (fs.existsSync(file.path)) {
+              fs.unlinkSync(file.path);
+              console.log('Cleaned up file:', file.path);
+            }
+          });
+        });
+      }
+      res.status(500).json({ error: error.message });
+    }
+  });
 });
 
-// Start the server
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
+  console.log(`Upload directory: ${uploadDir}`);
 });
