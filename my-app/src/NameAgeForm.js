@@ -8,7 +8,8 @@ function NameAgeForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Submit button clicked");  // Add this line to confirm button click
+    console.log("Submit button clicked");
+    navigate('/upload', { state: { name, age } });
   
     try {
       const response = await fetch('http://localhost:5001/save', {
