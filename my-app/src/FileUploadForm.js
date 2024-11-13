@@ -27,10 +27,17 @@ function FileUploadForm() {
   const tasks = [
     {
       id: 0,
-      title: { hindi: 'पहला कार्य', english: '1st Task' },
+      title: { 
+        hindi: 'पहला कार्य', 
+        english: '1st Task' 
+      },
       paragraph: {
-        hindi: 'एक बार की बात है, एक छोटे से गाँव में, एक प्यारी सी बच्ची रहती थी। उसका नाम नीता था। नीता बचपन से ही बहुत ही समझदार थी। वह हमेशा अपने दादी के साथ खेलती और बातें करती थी। एक दिन, नीता के पास एक खास खिलौना आया। यह एक सुंदर सा किताब था, जिसमें फूलों के बारे में बहुत सी ख़ूबसूरत तस्वीरें थीं। नीता ने दादी के साथ उस किताब को देखकर खुशी-खुशी पढ़ना शुरू किया। उसके बाद, नीता ने अपने दोस्तों को भी वो किताब दिखाई और सबको फूलों के बारे में बताया। और सबको यह सिखाया कि प्रकृति की सुंदर सी चीजों को सबको समझने का अवसर मिलता है। इस कहानी का संदेश है कि हमें प्रकृति की सुंदरता को समझने और महसूस करने का समय निकालना चाहिए, और हमें अपने परिवार और दोस्तों के साथ उसे साझा करना चाहिए।',
-        english: 'Once upon a time, in a small village, there was a lovely little girl named Neeta. Neeta was very wise from a young age. She would always play with her grandmother and chat with her.One day, Neeta got a special toy, a beautiful book with many lovely pictures of flowers. She happily started reading it with her grandmother. Later, she showed the book to her friends and told them about the flowers, teaching everyone about the beauty of nature.The message of this story is that we should take time to understand and appreciate nature\'s beauty and share it with family and friends.'
+        hindi: [
+          'एक बार की बात है, एक छोटे से गाँव में, एक प्यारी सी बच्ची रहती थी। उसका नाम नीता था। नीता बचपन से ही बहुत ही समझदार थी। वह हमेशा अपने दादी के साथ खेलती और बातें करती थी। एक दिन, नीता के पास एक खास खिलौना आया। यह एक सुंदर सा किताब था, जिसमें फूलों के बारे में बहुत सी ख़ूबसूरत तस्वीरें थीं। नीता ने दादी के साथ उस किताब को देखकर खुशी-खुशी पढ़ना शुरू किया। उसके बाद, नीता ने अपने दोस्तों को भी वो किताब दिखाई और सबको फूलों के बारे में बताया। और सबको यह सिखाया कि प्रकृति की सुंदर सी चीजों को सबको समझने का अवसर मिलता है। इस कहानी का संदेश है कि हमें प्रकृति की सुंदरता को समझने और महसूस करने का समय निकालना चाहिए, और हमें अपने परिवार और दोस्तों के साथ उसे साझा करना चाहिए।'
+        ],
+        english: [
+          'Once upon a time, in a small village, there was a lovely little girl named Neeta. Neeta was very wise from a young age. She would always play with her grandmother and chat with her. One day, Neeta got a special toy, a beautiful book with many lovely pictures of flowers. She happily started reading it with her grandmother. Later, she showed the book to her friends and told them about the flowers, teaching everyone about the beauty of nature. The message of this story is that we should take time to understand and appreciate nature\'s beauty and share it with family and friends.'
+        ]
       }
     },
     {
@@ -337,27 +344,21 @@ function FileUploadForm() {
         {selectedTab === 0 ? (
     language === 'hindi' ? (
         <>
-            <p>कृपया "आवाज़ रिकॉर्ड करें" बटन पर क्लिक करें और जोर से पढ़ें।</p>
-            <p>समाप्त होने पर, "रिकॉर्डिंग रोकें" पर क्लिक करें और फिर अपनी रिकॉर्डिंग को सहेजने के लिए "जमा करें" दबाएँ।</p>
+            <p>कृपया "आवाज़ रिकॉर्ड करें" पर क्लिक करें और जोर से पढ़ें। आपके पास 1 मिनट है। रिकॉर्डिंग स्वचालित रूप से रुक जाएगी। "जमा करें" पर क्लिक करें।</p>
         </>
     ) : (
         <>
-            <p>Please click on the "Record Voice" button and read the passage out loud.</p>
-            <p>Once finished, click "Stop Recording" and then "Submit" to save your recording.</p>
+            <p>Please click "Record Voice" to start reading aloud. You have 1 minute. Recording will stop automatically. Click "Submit" to save.</p>
         </>
     )
 ) : (
     language === 'hindi' ? (
         <>
-            <p>कृपया "वीडियो रिकॉर्ड करें" बटन पर क्लिक करें और चित्र में जो आप देख रहे हैं उसका वर्णन करें।</p>
-            <p>यदि आप ज़ूम करना चाहते हैं, तो चित्र पर क्लिक करें।</p>
-            <p>समाप्त होने पर, "रिकॉर्डिंग रोकें" पर क्लिक करें और फिर अपनी रिकॉर्डिंग को सहेजने के लिए "जमा करें" दबाएँ।</p>
+            <p>कृपया "वीडियो रिकॉर्ड करें" पर क्लिक करें और चित्र का वर्णन करें। आपके पास 1 मिनट है। रिकॉर्डिंग स्वचालित रूप से रुक जाएगी। "जमा करें" पर क्लिक करें। ज़ूम इन के लिए, कृपया चित्र पर क्लिक करें।</p>
         </>
     ) : (
         <>
-            <p>Please click on the "Record Video" button and describe what you see in the picture.</p>
-            <p>If you want to zoom, click on the picture.</p>
-            <p>Once finished, click "Stop Recording" and then "Submit" to save your recording.</p>
+            <p>Please click "Record Video" and describe the picture. You have 1 minute. Recording will stop automatically. Click "Submit" to save. To zoom in, please click on the picture.</p>
         </>
     )
 )}
@@ -553,7 +554,7 @@ function FileUploadForm() {
           <div className="selected-counter" style={{ marginRight: '20px' }}>
             {language === 'hindi'
               ? `चयनित: ${totalSelectedCount}`
-              : `Selected: ${totalSelectedCount}`}
+              : `Score: ${totalSelectedCount}`}
           </div>
         </div>
 
