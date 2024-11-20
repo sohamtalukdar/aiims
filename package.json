@@ -3,5 +3,8 @@
     "cors": "^2.8.5",
     "pg": "^8.13.1",
     "webpack": "^4.47.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
   }
 }
