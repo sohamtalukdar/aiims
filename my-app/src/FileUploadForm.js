@@ -14,6 +14,8 @@ function FileUploadForm() {
   const mediaChunksRef = useRef([]);
   const [showImageModal, setShowImageModal] = useState(false);
   const [showInitialPopup, setShowInitialPopup] = useState(true); // New state variable
+  const [countdown, setCountdown] = useState(60);
+  
 
   // State variables for instruction page in the third task
   const [showInitialInstructions, setShowInitialInstructions] = useState(false);
@@ -23,39 +25,35 @@ function FileUploadForm() {
   const [showRefreshWarning, setShowRefreshWarning] = useState(false);
 
   useEffect(() => {
-    const handleBeforeUnload = (e) => {
-      if (!showInitialPopup) {  // Only show warning after test has begun
-        e.preventDefault();
-        setShowRefreshWarning(true);
-        e.returnValue = '';
-        return '';
-      }
-    };
-  
     const handleKeyDown = (e) => {
-      if (!showInitialPopup && ((e.ctrlKey && e.key === 'r') || e.key === 'F5')) {
+      // Intercept refresh shortcuts: Cmd + R (macOS), Ctrl + R, and F5
+      if (
+        !showInitialPopup &&
+        ((e.metaKey && e.key === 'r') || // Cmd + R (macOS)
+         (e.ctrlKey && e.key === 'r') || // Ctrl + R (Windows/Linux)
+         e.key === 'F5')                 // F5 (all platforms)
+      ) {
         e.preventDefault();
-        setShowRefreshWarning(true);
+        setShowRefreshWarning(true); // Show custom modal
       }
     };
   
-    window.addEventListener('beforeunload', handleBeforeUnload);
     window.addEventListener('keydown', handleKeyDown);
   
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [showInitialPopup]);
 
   const handleRefreshConfirm = () => {
     setShowRefreshWarning(false);
-    window.location.reload();
+    window.location.reload(); // Perform manual refresh
   };
-
+  
   const handleRefreshCancel = () => {
     setShowRefreshWarning(false);
   };
+  
 
 
   const tasks = [
@@ -191,30 +189,24 @@ function FileUploadForm() {
   ];
 
   const handleTabClick = (id) => {
-    // If test is completed and the user is trying to click on task id 2, return early
-    if (id === 2 && testCompleted) {
-      return;
-    }
-    
-    // Clear recording state when switching tabs
+    setCountdown(60); // Reset countdown when switching tabs
     setMediaURL("");
     mediaChunksRef.current = [];
-    
-    // Stop any ongoing recording
+  
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
     }
-    
+  
     setSelectedTab(id);
     setShowModal(id !== 2);
-    
+  
     if (id === 2) {
       setShowInitialInstructions(true);
     } else {
       setShowInitialInstructions(false);
     }
-  };
+  };  
   
 
 
@@ -227,47 +219,73 @@ function FileUploadForm() {
     const mediaType = selectedTab === 1 
       ? { video: true, audio: true }  // Video with audio
       : { audio: true };              // Audio only
-    
+  
     if (!isRecording) {
       // Clear previous recording data when starting new recording
       setMediaURL("");
+      setCountdown(60); // Reset the countdown
       if (selectedTab === 1) {
         setVideoBlob(null);
       } else {
         setAudioBlob(null);
       }
-
+  
       navigator.mediaDevices.getUserMedia(mediaType)
         .then((stream) => {
           const mediaRecorder = new MediaRecorder(stream);
           mediaRecorderRef.current = mediaRecorder;
           mediaChunksRef.current = [];
-          
+  
           mediaRecorder.start();
           setIsRecording(true);
-
+  
+          // Timer to stop recording after 60 seconds
+          const stopTimer = setTimeout(() => {
+            if (mediaRecorder.state === "recording") {
+              mediaRecorder.stop();
+              mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            }
+          }, 60000); // 60 seconds
+  
+          // Countdown interval
+          const countdownInterval = setInterval(() => {
+            setCountdown((prev) => {
+              if (prev <= 1) {
+                clearInterval(countdownInterval); // Clear interval when countdown ends
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000); // Decrement countdown every second
+  
+          // Save references for cleanup
+          mediaRecorder.stopTimer = stopTimer;
+          mediaRecorder.countdownInterval = countdownInterval;
+  
           mediaRecorder.addEventListener('dataavailable', (event) => {
             if (event.data.size > 0) {
               mediaChunksRef.current.push(event.data);
             }
           });
-
+  
           mediaRecorder.addEventListener('stop', () => {
             const mediaBlob = new Blob(mediaChunksRef.current, {
               type: selectedTab === 1 ? 'video/webm' : 'audio/webm'
             });
-
+  
             const url = URL.createObjectURL(mediaBlob);
             setMediaURL(url);
-
+  
             if (selectedTab === 1) {
               setVideoBlob(mediaBlob);
             } else {
               setAudioBlob(mediaBlob);
             }
-
+  
             setIsRecording(false);
             mediaChunksRef.current = [];
+            clearTimeout(mediaRecorder.stopTimer); // Clear stop timer
+            clearInterval(mediaRecorder.countdownInterval); // Clear countdown interval
           });
         })
         .catch((err) => {
@@ -276,15 +294,15 @@ function FileUploadForm() {
           alert(`Could not access your ${selectedTab === 1 ? 'camera' : 'microphone'}. Please check your browser settings.`);
         });
     } else {
+      // Manually stop the recording
       if (mediaRecorderRef.current) {
         mediaRecorderRef.current.stop();
         mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+        clearTimeout(mediaRecorderRef.current.stopTimer); // Clear stop timer
+        clearInterval(mediaRecorderRef.current.countdownInterval); // Clear countdown interval
       }
     }
-  };
-
-  
-  
+  };  
 
   const handleReRecord = () => {
     // Clear the current recording
@@ -310,64 +328,63 @@ function FileUploadForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     if (!state?.name || !state?.age) {
       alert('Name and age are required');
       return;
     }
-
-    // Check if we have a recording to submit
+  
     const currentBlob = selectedTab === 1 ? videoBlob : audioBlob;
     if (!currentBlob) {
       alert(`Please record ${selectedTab === 1 ? 'video' : 'audio'} before submitting.`);
       return;
     }
-
+  
     const formData = new FormData();
     formData.append('name', state.name);
     formData.append('age', state.age);
-
-    // Only append the current media type being recorded
+  
     if (selectedTab === 1) {
       formData.append('video', videoBlob, 'video.webm');
-      console.log('Submitting video recording');
     } else {
       formData.append('audio', audioBlob, 'audio.webm');
-      console.log('Submitting audio recording');
     }
-
+  
     try {
       const response = await fetch('http://localhost:5001/save', {
         method: 'POST',
         body: formData
       });
-
+  
       if (!response.ok) {
         throw new Error(`Server error: ${response.status}`);
       }
-
+  
       const result = await response.json();
       console.log(`${selectedTab === 1 ? 'Video' : 'Audio'} upload result:`, result);
       
-      alert(`${selectedTab === 1 ? 'Video' : 'Audio'} uploaded successfully!`);
       setShowTick(true);
-      setTimeout(() => setShowTick(false), 2000);
-
-      // Clear the recording after successful upload
+      setTimeout(() => {
+        setShowTick(false);
+        // Move to next task after successful submission
+        const nextTab = selectedTab + 1;
+        if (nextTab < tasks.length) {
+          handleTabClick(nextTab);
+        }
+      }, 1);
+  
       setMediaURL("");
       if (selectedTab === 1) {
         setVideoBlob(null);
       } else {
         setAudioBlob(null);
       }
-
+  
     } catch (error) {
       console.error('Upload failed:', error);
       alert(`Upload failed: ${error.message}`);
     }
   };
-  
-  
 
   // Instruction Modal Component
   const InstructionModal = ({ onClose }) => (
@@ -868,47 +885,53 @@ return (
                 }}
               >
                 <div className="media-controls">
-                  {mediaURL ? (
-                    <>
-                      {selectedTab === 1 ? (
-                        <video src={mediaURL} controls />
-                      ) : (
-                        <audio src={mediaURL} controls />
-                      )}
-                      <button 
-                        type="button" 
-                        onClick={handleReRecord} 
-                        className="custom-button"
-                      >
-                        {language === 'hindi' ? 'पुनः रिकॉर्ड करें' : 'Re-record'}
-                      </button>
-                    </>
+                {mediaURL ? (
+                <>
+                  {selectedTab === 1 ? (
+                    <video src={mediaURL} controls />
                   ) : (
-                    <button
-                      type="button"
-                      onClick={handleMediaRecord}
-                      className="custom-button"
-                      style={{
-                        marginBottom: '10px',
-                        padding: '8px 12px',
-                        cursor: 'pointer',
-                        backgroundColor: '#007bff',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                      }}
-                    >
-                      {isRecording
-                        ? (language === 'hindi' ? 'रिकॉर्डिंग रोकें' : 'Stop Recording')
-                        : language === 'hindi'
-                        ? selectedTab === 1
-                          ? 'वीडियो रिकॉर्ड करें'
-                          : 'आवाज़ रिकॉर्ड करें'
-                        : selectedTab === 1
-                        ? 'Record Video'
-                        : 'Record Voice'}
-                    </button>
+                    <audio src={mediaURL} controls />
                   )}
+                  <button 
+                    type="button" 
+                    onClick={handleReRecord} 
+                    className="custom-button"
+                  >
+                    {language === 'hindi' ? 'पुनः रिकॉर्ड करें' : 'Re-record'}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div style={{ textAlign: 'center', marginTop: '10px' }}>
+                    {isRecording && <p>Time remaining: {countdown}s</p>}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleMediaRecord}
+                    className="custom-button"
+                    style={{
+                      marginBottom: '10px',
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      backgroundColor: '#007bff',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                    }}
+                  >
+                    {isRecording
+                      ? (language === 'hindi' ? 'रिकॉर्डिंग रोकें' : 'Stop Recording')
+                      : language === 'hindi'
+                      ? selectedTab === 1
+                        ? 'वीडियो रिकॉर्ड करें'
+                        : 'आवाज़ रिकॉर्ड करें'
+                      : selectedTab === 1
+                      ? 'Record Video'
+                      : 'Record Voice'}
+                  </button>
+                </>
+              )}
+
                 </div>
 
                 <button 

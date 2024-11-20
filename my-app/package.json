@@ -4,6 +4,7 @@
   "private": true,
   "devDependencies": {
     "@babel/core": "^7.26.0",
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@babel/preset-env": "^7.26.0",
     "@babel/preset-react": "^7.25.9",
     "concurrently": "^6.0.0"
@@ -31,7 +32,10 @@
     "server": "node server.js",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "start-all": "concurrently \"npm start\" \"node server.js\"",
+    "start-client": "npm start",
+    "start-server": "node server.js"
   },
   "eslintConfig": {
     "extends": [
