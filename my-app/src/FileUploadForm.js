@@ -379,6 +379,10 @@ const handleSubmit = async (e) => {
   formData.append('name', state.name);
   formData.append('age', state.age);
 
+  formData.append('msme', state.msme || '');
+  console.log('Appending msme:', state.msme);
+
+
   // Add logging to see what's being appended
   if (selectedTab === 1) {
     formData.append('video', videoBlob, 'video.webm');

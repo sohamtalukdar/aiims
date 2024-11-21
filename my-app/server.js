@@ -59,10 +59,12 @@ app.post('/save', (req, res) => {
       console.log('Request body:', req.body);
       console.log('Request files:', req.files);
 
-      const { name, age } = req.body;
+      const { name, age, msme } = req.body;
       if (!name || !age) {
         throw new Error('Name and age are required');
       }
+
+      const msmeValue = msme ? parseInt(msme, 10) : 0; 
 
       // Get existing user data
       const existingUser = await client.query(
@@ -78,7 +80,6 @@ app.post('/save', (req, res) => {
         if (audioPath && fs.existsSync(path.join(__dirname, audioPath))) {
           fs.unlinkSync(path.join(__dirname, audioPath));
         }
-        // Store relative path from the project root
         audioPath = path.relative(__dirname, req.files.audio[0].path);
       }
 
@@ -86,7 +87,6 @@ app.post('/save', (req, res) => {
         if (videoPath && fs.existsSync(path.join(__dirname, videoPath))) {
           fs.unlinkSync(path.join(__dirname, videoPath));
         }
-        // Store relative path from the project root
         videoPath = path.relative(__dirname, req.files.video[0].path);
       }
 
@@ -105,10 +105,13 @@ app.post('/save', (req, res) => {
           updates.push(`video = $${++paramCount}`);
           values.push(videoPath);
         }
+        if (msme) {
+          updates.push(`msme = $${++paramCount}`);
+          values.push(msmeValue);
+        }
 
-        // Add the name parameter last
         values.push(name);
-        
+
         const updateQuery = `
           UPDATE user_audio 
           SET ${updates.join(', ')}
@@ -121,14 +124,13 @@ app.post('/save', (req, res) => {
 
         result = await client.query(updateQuery, values);
       } else {
-        // For new records, include msme with default null
+        // Insert new record
         const insertQuery = `
           INSERT INTO user_audio (name, age, audio, video, msme)
           VALUES ($1, $2, $3, $4, $5)
           RETURNING *
         `;
-
-        const insertValues = [name, age, audioPath, videoPath, null]; // msme set to null
+        const insertValues = [name, age, audioPath, videoPath, msmeValue];
         console.log('Insert Query:', insertQuery);
         console.log('Insert Values:', insertValues);
 
@@ -149,8 +151,7 @@ app.post('/save', (req, res) => {
     } catch (error) {
       await client.query('ROLLBACK');
       console.error('Database error:', error);
-      
-      // Clean up uploaded files on error
+
       if (req.files) {
         Object.values(req.files).forEach(files => {
           files.forEach(file => {
@@ -162,13 +163,10 @@ app.post('/save', (req, res) => {
         });
       }
 
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Database operation failed',
-        details: error.message,
-        query: error.query,
-        parameters: error.parameters
+        details: error.message
       });
-
     } finally {
       client.release();
     }
