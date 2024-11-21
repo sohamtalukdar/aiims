@@ -247,6 +247,8 @@ useEffect(() => {
         setAudioBlob(null);
       }
   
+      console.log('Starting media recording for:', selectedTab === 1 ? 'video' : 'audio');
+  
       navigator.mediaDevices.getUserMedia(mediaType)
         .then((stream) => {
           const mediaRecorder = new MediaRecorder(stream);
@@ -255,33 +257,34 @@ useEffect(() => {
   
           mediaRecorder.start();
           setIsRecording(true);
+          console.log('MediaRecorder started');
   
           // Timer to stop recording after 60 seconds
           const stopTimer = setTimeout(() => {
             if (mediaRecorder.state === "recording") {
               mediaRecorder.stop();
               mediaRecorder.stream.getTracks().forEach(track => track.stop());
+              console.log('Recording stopped by timer');
             }
-          }, 60000); // 60 seconds
+          }, 60000);
   
-          // Countdown interval
           const countdownInterval = setInterval(() => {
             setCountdown((prev) => {
               if (prev <= 1) {
-                clearInterval(countdownInterval); // Clear interval when countdown ends
+                clearInterval(countdownInterval);
                 return 0;
               }
               return prev - 1;
             });
-          }, 1000); // Decrement countdown every second
+          }, 1000);
   
-          // Save references for cleanup
           mediaRecorder.stopTimer = stopTimer;
           mediaRecorder.countdownInterval = countdownInterval;
   
           mediaRecorder.addEventListener('dataavailable', (event) => {
             if (event.data.size > 0) {
               mediaChunksRef.current.push(event.data);
+              console.log('Data chunk received:', event.data.size, 'bytes');
             }
           });
   
@@ -289,20 +292,26 @@ useEffect(() => {
             const mediaBlob = new Blob(mediaChunksRef.current, {
               type: selectedTab === 1 ? 'video/webm' : 'audio/webm'
             });
+            console.log('Created media blob:', {
+              type: mediaBlob.type,
+              size: mediaBlob.size
+            });
   
             const url = URL.createObjectURL(mediaBlob);
             setMediaURL(url);
   
             if (selectedTab === 1) {
               setVideoBlob(mediaBlob);
+              console.log('Video blob set:', mediaBlob);
             } else {
               setAudioBlob(mediaBlob);
+              console.log('Audio blob set:', mediaBlob);
             }
   
             setIsRecording(false);
             mediaChunksRef.current = [];
-            clearTimeout(mediaRecorder.stopTimer); // Clear stop timer
-            clearInterval(mediaRecorder.countdownInterval); // Clear countdown interval
+            clearTimeout(mediaRecorder.stopTimer);
+            clearInterval(mediaRecorder.countdownInterval);
           });
         })
         .catch((err) => {
@@ -311,12 +320,12 @@ useEffect(() => {
           alert(`Could not access your ${selectedTab === 1 ? 'camera' : 'microphone'}. Please check your browser settings.`);
         });
     } else {
-      // Manually stop the recording
       if (mediaRecorderRef.current) {
         mediaRecorderRef.current.stop();
         mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-        clearTimeout(mediaRecorderRef.current.stopTimer); // Clear stop timer
-        clearInterval(mediaRecorderRef.current.countdownInterval); // Clear countdown interval
+        clearTimeout(mediaRecorderRef.current.stopTimer);
+        clearInterval(mediaRecorderRef.current.countdownInterval);
+        console.log('Recording stopped manually');
       }
     }
   };  
@@ -343,67 +352,89 @@ useEffect(() => {
   };
   
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-  
-    if (!state?.name || !state?.age) {
-      alert('Name and age are required');
-      return;
+  // Inside the handleSubmit function in FileUploadForm.js, update it as follows:
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  if (!state?.name || !state?.age) {
+    alert('Name and age are required');
+    return;
+  }
+
+  const currentBlob = selectedTab === 1 ? videoBlob : audioBlob;
+  if (!currentBlob) {
+    alert(`Please record ${selectedTab === 1 ? 'video' : 'audio'} before submitting.`);
+    return;
+  }
+
+  // Log the blob details
+  console.log('Submitting blob:', {
+    type: currentBlob.type,
+    size: currentBlob.size,
+    tab: selectedTab
+  });
+
+  const formData = new FormData();
+  formData.append('name', state.name);
+  formData.append('age', state.age);
+
+  // Add logging to see what's being appended
+  if (selectedTab === 1) {
+    formData.append('video', videoBlob, 'video.webm');
+    console.log('Appending video blob:', videoBlob);
+  } else {
+    formData.append('audio', audioBlob, 'audio.webm');
+    console.log('Appending audio blob:', audioBlob);
+  }
+
+  // Log the FormData (note: FormData can't be directly logged)
+  for (let pair of formData.entries()) {
+    console.log('FormData entry:', pair[0], pair[1]);
+  }
+
+  try {
+    console.log('Starting upload...');
+    const response = await fetch('http://localhost:5001/save', {
+      method: 'POST',
+      body: formData
+    });
+
+    console.log('Response status:', response.status);
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Server error:', errorData);
+      throw new Error(`Server error: ${errorData.error || response.status}`);
     }
-  
-    const currentBlob = selectedTab === 1 ? videoBlob : audioBlob;
-    if (!currentBlob) {
-      alert(`Please record ${selectedTab === 1 ? 'video' : 'audio'} before submitting.`);
-      return;
-    }
-  
-    const formData = new FormData();
-    formData.append('name', state.name);
-    formData.append('age', state.age);
-  
+
+    const result = await response.json();
+    console.log(`${selectedTab === 1 ? 'Video' : 'Audio'} upload result:`, result);
+    
+    setShowTick(true);
+    setTimeout(() => {
+      setShowTick(false);
+      // Mark current task as completed
+      setCompletedTasks(prev => new Set([...prev, selectedTab]));
+      // Move to next task after successful submission
+      const nextTab = selectedTab + 1;
+      if (nextTab < tasks.length) {
+        handleTabClick(nextTab);
+      }
+    }, 1);
+
+    setMediaURL("");
     if (selectedTab === 1) {
-      formData.append('video', videoBlob, 'video.webm');
+      setVideoBlob(null);
     } else {
-      formData.append('audio', audioBlob, 'audio.webm');
+      setAudioBlob(null);
     }
-  
-    try {
-      const response = await fetch('http://localhost:5001/save', {
-        method: 'POST',
-        body: formData
-      });
-  
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
-      }
-  
-      const result = await response.json();
-      console.log(`${selectedTab === 1 ? 'Video' : 'Audio'} upload result:`, result);
-      
-      setShowTick(true);
-      setTimeout(() => {
-        setShowTick(false);
-        // Mark current task as completed
-        setCompletedTasks(prev => new Set([...prev, selectedTab]));
-        // Move to next task after successful submission
-        const nextTab = selectedTab + 1;
-        if (nextTab < tasks.length) {
-          handleTabClick(nextTab);
-        }
-      }, 1);
-  
-      setMediaURL("");
-      if (selectedTab === 1) {
-        setVideoBlob(null);
-      } else {
-        setAudioBlob(null);
-      }
-  
-    } catch (error) {
-      console.error('Upload failed:', error);
-      alert(`Upload failed: ${error.message}`);
-    }
-  };
+
+  } catch (error) {
+    console.error('Upload failed:', error);
+    alert(`Upload failed: ${error.message}. Please check console for details.`);
+  }
+};
 
   // Instruction Modal Component
   const InstructionModal = ({ onClose }) => (

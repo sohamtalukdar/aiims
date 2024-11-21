@@ -1,4 +1,3 @@
-// server.js
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
@@ -24,7 +23,7 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const filename = `${file.fieldname}-${uniqueSuffix}.webm`;
-    console.log('Generating filename for', file.fieldname + ':', filename);
+    console.log('Generating filename:', filename);
     cb(null, filename);
   }
 });
@@ -52,7 +51,11 @@ app.post('/save', (req, res) => {
       return res.status(400).json({ error: err.message });
     }
 
+    const client = await pool.connect();
+    
     try {
+      await client.query('BEGIN');
+      
       console.log('Request body:', req.body);
       console.log('Request files:', req.files);
 
@@ -62,75 +65,81 @@ app.post('/save', (req, res) => {
       }
 
       // Get existing user data
-      const existingUser = await pool.query(
+      const existingUser = await client.query(
         'SELECT * FROM user_audio WHERE name = $1',
         [name]
       );
 
-      // Initialize paths with existing values or null
       let audioPath = existingUser.rows.length > 0 ? existingUser.rows[0].audio : null;
       let videoPath = existingUser.rows.length > 0 ? existingUser.rows[0].video : null;
 
-      // Handle audio file update if present
+      // Process new files and store relative paths
       if (req.files.audio && req.files.audio[0]) {
-        // Only delete old audio file if we're updating audio
-        if (audioPath && fs.existsSync(audioPath)) {
-          console.log('Deleting old audio file:', audioPath);
-          fs.unlinkSync(audioPath);
+        if (audioPath && fs.existsSync(path.join(__dirname, audioPath))) {
+          fs.unlinkSync(path.join(__dirname, audioPath));
         }
-        audioPath = req.files.audio[0].path;
-        console.log('New audio file path:', audioPath);
+        // Store relative path from the project root
+        audioPath = path.relative(__dirname, req.files.audio[0].path);
       }
 
-      // Handle video file update if present
       if (req.files.video && req.files.video[0]) {
-        // Only delete old video file if we're updating video
-        if (videoPath && fs.existsSync(videoPath)) {
-          console.log('Deleting old video file:', videoPath);
-          fs.unlinkSync(videoPath);
+        if (videoPath && fs.existsSync(path.join(__dirname, videoPath))) {
+          fs.unlinkSync(path.join(__dirname, videoPath));
         }
-        videoPath = req.files.video[0].path;
-        console.log('New video file path:', videoPath);
+        // Store relative path from the project root
+        videoPath = path.relative(__dirname, req.files.video[0].path);
       }
 
       let result;
       if (existingUser.rows.length > 0) {
-        // Create update query based on what's being updated
-        let updateQuery = 'UPDATE user_audio SET age = $1';
-        let queryParams = [age];
+        // Determine which fields to update
+        const updates = ['age = $1'];
+        const values = [age];
         let paramCount = 1;
 
-        // Only include audio in update if it's being updated
         if (req.files.audio) {
-          updateQuery += `, audio = $${++paramCount}`;
-          queryParams.push(audioPath);
+          updates.push(`audio = $${++paramCount}`);
+          values.push(audioPath);
         }
-
-        // Only include video in update if it's being updated
         if (req.files.video) {
-          updateQuery += `, video = $${++paramCount}`;
-          queryParams.push(videoPath);
+          updates.push(`video = $${++paramCount}`);
+          values.push(videoPath);
         }
 
-        updateQuery += ` WHERE name = $${++paramCount} RETURNING *`;
-        queryParams.push(name);
-
-        result = await pool.query(updateQuery, queryParams);
-        console.log('Updated record:', result.rows[0]);
-      } else {
-        // Insert new record
-        const insertQuery = `
-        INSERT INTO user_audio (name, age, audio, video, msme)
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING *
-      `;
+        // Add the name parameter last
+        values.push(name);
         
-        result = await pool.query(insertQuery, [name, age, audioPath, videoPath]);
-        console.log('Inserted new record:', result.rows[0]);
+        const updateQuery = `
+          UPDATE user_audio 
+          SET ${updates.join(', ')}
+          WHERE name = $${++paramCount}
+          RETURNING *
+        `;
+
+        console.log('Update Query:', updateQuery);
+        console.log('Update Values:', values);
+
+        result = await client.query(updateQuery, values);
+      } else {
+        // For new records, include msme with default null
+        const insertQuery = `
+          INSERT INTO user_audio (name, age, audio, video, msme)
+          VALUES ($1, $2, $3, $4, $5)
+          RETURNING *
+        `;
+
+        const insertValues = [name, age, audioPath, videoPath, null]; // msme set to null
+        console.log('Insert Query:', insertQuery);
+        console.log('Insert Values:', insertValues);
+
+        result = await client.query(insertQuery, insertValues);
       }
+
+      await client.query('COMMIT');
 
       res.status(201).json({
         message: 'Saved successfully',
+        data: result.rows[0],
         files: {
           audio: audioPath,
           video: videoPath
@@ -138,8 +147,10 @@ app.post('/save', (req, res) => {
       });
 
     } catch (error) {
-      console.error('Error:', error);
-      // Clean up any newly uploaded files if there was an error
+      await client.query('ROLLBACK');
+      console.error('Database error:', error);
+      
+      // Clean up uploaded files on error
       if (req.files) {
         Object.values(req.files).forEach(files => {
           files.forEach(file => {
@@ -150,8 +161,26 @@ app.post('/save', (req, res) => {
           });
         });
       }
-      res.status(500).json({ error: error.message });
+
+      res.status(500).json({ 
+        error: 'Database operation failed',
+        details: error.message,
+        query: error.query,
+        parameters: error.parameters
+      });
+
+    } finally {
+      client.release();
     }
+  });
+});
+
+// Add error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ 
+    error: 'Internal server error',
+    details: err.message
   });
 });
 
