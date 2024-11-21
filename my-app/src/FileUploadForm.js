@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect} from 'react';
 import { useLocation } from 'react-router-dom';
+import tasks from './/data/tasks';
 import './App.css';
 
 function FileUploadForm() {
+  const [isPatient, setIsPatient] = useState(true); // Default to true
   const { state } = useLocation();
   const [showModal, setShowModal] = useState(true);
   const [selectedTab, setSelectedTab] = useState(0);
@@ -15,7 +17,8 @@ function FileUploadForm() {
   const [showImageModal, setShowImageModal] = useState(false);
   const [showInitialPopup, setShowInitialPopup] = useState(true); // New state variable
   const [countdown, setCountdown] = useState(60);
-  
+  const [completedTasks, setCompletedTasks] = useState(new Set());
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
   // State variables for instruction page in the third task
   const [showInitialInstructions, setShowInitialInstructions] = useState(false);
@@ -23,6 +26,28 @@ function FileUploadForm() {
   const [audioBlob, setAudioBlob] = useState(null);
   const [videoBlob, setVideoBlob] = useState(null);
   const [showRefreshWarning, setShowRefreshWarning] = useState(false);
+
+  const [allSelectedAnswers, setAllSelectedAnswers] = useState(() => {
+    const savedData = sessionStorage.getItem("allSelectedAnswers");
+    return savedData ? JSON.parse(savedData) : {};
+});
+
+useEffect(() => {
+    sessionStorage.setItem("allSelectedAnswers", JSON.stringify(allSelectedAnswers));
+}, [allSelectedAnswers]);
+
+useEffect(() => {
+  const clearDataOnRefresh = () => {
+      sessionStorage.clear();
+  };
+
+  window.addEventListener("beforeunload", clearDataOnRefresh);
+
+  return () => {
+      window.removeEventListener("beforeunload", clearDataOnRefresh);
+  };
+}, []);
+
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -55,141 +80,133 @@ function FileUploadForm() {
   };
   
 
-
-  const tasks = [
-    {
-      id: 0,
-      title: { 
-        hindi: 'पहला कार्य', 
-        english: '1st Task' 
-      },
-      paragraph: {
-        hindi: [
-          'एक बार की बात है, एक छोटे से गाँव में, एक प्यारी सी बच्ची रहती थी। उसका नाम नीता था। नीता बचपन से ही बहुत ही समझदार थी। वह हमेशा अपने दादी के साथ खेलती और बातें करती थी। एक दिन, नीता के पास एक खास खिलौना आया। यह एक सुंदर सा किताब था, जिसमें फूलों के बारे में बहुत सी ख़ूबसूरत तस्वीरें थीं। नीता ने दादी के साथ उस किताब को देखकर खुशी-खुशी पढ़ना शुरू किया। उसके बाद, नीता ने अपने दोस्तों को भी वो किताब दिखाई और सबको फूलों के बारे में बताया। और सबको यह सिखाया कि प्रकृति की सुंदर सी चीजों को सबको समझने का अवसर मिलता है। इस कहानी का संदेश है कि हमें प्रकृति की सुंदरता को समझने और महसूस करने का समय निकालना चाहिए, और हमें अपने परिवार और दोस्तों के साथ उसे साझा करना चाहिए।'
-        ],
-        english: [
-          'Once upon a time, in a small village, there was a lovely little girl named Neeta. Neeta was very wise from a young age. She would always play with her grandmother and chat with her. One day, Neeta got a special toy, a beautiful book with many lovely pictures of flowers. She happily started reading it with her grandmother. Later, she showed the book to her friends and told them about the flowers, teaching everyone about the beauty of nature. The message of this story is that we should take time to understand and appreciate nature\'s beauty and share it with family and friends.'
-        ]
-      }
-    },
-    {
-      id: 1,
-      title: { hindi: 'दूसरा कार्य', english: '2nd Task' },
-      image: '/image.png',
-    },
-    {
-      id: 2,
-      title: { hindi: 'तीसरा कार्य', english: '3rd Task' },
-      questions: [
-        {
-          question: { hindi: 'यह कौन सा है?', english: 'What is the' },
-          choices: [
-            { hindi: 'वर्ष', english: 'Year' },
-            { hindi: 'ऋतु', english: 'Season' },
-            { hindi: 'सप्ताह का दिन', english: 'Day of the week' },
-            { hindi: 'महीना', english: 'Month' },
-            { hindi: 'तारीख', english: 'Date' }
-          ],
-          answer: null, // User's selected answer
-        },
-        {
-          question: { hindi: 'हम अभी कहाँ हैं?', english: 'Where are we now' },
-          choices: [
-            { hindi: 'राज्य', english: 'State' },
-            { hindi: 'देश', english: 'Country' },
-            { hindi: 'शहर/नगर', english: 'Town/City' },
-            { hindi: 'अस्पताल', english: 'Hospital' },
-            { hindi: 'मंज़िल', english: 'Floor' }
-          ],
-          answer: null, // User's selected answer
-        },
-        {
-          question: { hindi: '3 असंबंधित वस्तुओं का नाम बताएं, विषय से उन्हें अब दोहराने और बाद में याद रखने के लिए कहें। उदाहरण:', english: 'Name 3 unrelated objects, ask subject to recite them now and remember them for later. e.g.' },
-          choices: [
-            { hindi: 'सेब', english: 'Apple' },
-            { hindi: 'मेज़', english: 'Table' },
-            { hindi: 'पैसा', english: 'Penny' }
-          ],
-          answer: null, // User's selected answer
-        },
-        {
-          question: { hindi: '100 से पीछे की ओर सात-सात करके गिनती करें', english: 'Count backward from 100 by sevens' },
-          choices: [
-            { hindi: '93', english: '93' },
-            { hindi: '86', english: '86' },
-            { hindi: '79', english: '79' },
-            { hindi: '72', english: '72' },
-            { hindi: '65', english: '65' }
-          ],
-          answer: null, // User's selected answer
-        },
-        {
-          question: { hindi: 'पहले याद करने को कहा गया तीन चीज़ों का नाम बताएं:', english: 'Name the three things asked to remember earlier:' },
-          choices: [
-            { hindi: 'सेब', english: 'Apple' },
-            { hindi: 'मेज़', english: 'Table' },
-            { hindi: 'पैसा', english: 'Penny' }
-          ],
-          answer: null, // User's selected answer
-        },
-        {
-          question: { hindi: 'रोगी को दिखाई गई वस्तुओं का नाम बताएं:', english: 'Name objects shown to patient:' },
-          choices: [
-            { hindi: 'कलाई घड़ी या घड़ी', english: 'Wristwatch or Clock' },
-            { hindi: 'पेन या पेंसिल', english: 'Pen or Pencil' }
-          ],
-          answer: null, // User's selected answer
-        },
-        {
-          question: { hindi: 'वाक्य को दोहराएं:', english: 'Repeat the phrase:' },
-          choices: [
-            { hindi: '"नहीं अगर, और, या परन्तु"', english: '"No ifs, ands, or buts."' }
-          ],
-          answer: null, // User's selected answer
-        },
-        {
-          question: { hindi: 'रोगी से इन निर्देशों का पालन करने के लिए कहें:', english: 'Ask the patient to follow these instructions:' },
-          choices: [
-            { hindi: 'कागज़ को अपने दाएं हाथ में लें', english: 'Take the paper in your right hand' },
-            { hindi: 'इसे आधा मोड़ें', english: 'Fold it in half' },
-            { hindi: 'और इसे फर्श पर रखें', english: 'And put it on the floor' }
-          ],
-          answer: null, // User's selected answer
-        },
-        {
-          question: { hindi: 'रोगी से निम्नलिखित निर्देश पढ़ने और उसका पालन करने के लिए कहें:', english: 'Ask the patient to read the following instruction and follow it:' },
-          choices: [
-            { hindi: '"अपनी आँखें बंद करें"', english: '"Close your eyes"' }
-          ],
-          answer: null, // User's selected answer
-        },
-        {
-          question: { hindi: 'रोगी से निम्नलिखित निर्देश पढ़ने और उसका पालन करने के लिए कहें:', english: 'Ask the patient to read the following instruction and follow it:' },
-          choices: [
-            { hindi: 'निर्देश का पालन किया गया', english: 'Instruction followed' }
-          ],
-          answer: null, // User's selected answer
-        },
-        {
-          question: { hindi: 'रोगी से कुछ भी एक वाक्य बनाकर लिखने के लिए कहें, जिसमें एक संज्ञा और एक क्रिया हो, कागज़ पर:', english: 'Ask the patient to make up and write a sentence about anything, which contains a noun and a verb on the blank paper:' },
-          choices: [
-            { hindi: 'वाक्य स्वीकार्य है', english: 'Sentence acceptable' }
-          ],
-          answer: null, // User's selected answer
-        },
-        {
-          question: { hindi: 'रोगी से इस चित्र को कागज़ पर कॉपी करने के लिए कहें:', english: 'Ask the patient to copy this picture on the blank paper:' },
-          choices: [
-            { hindi: 'चित्र स्वीकार्य', english: 'Picture acceptable' } // Leave blank if image will be shown instead of choices
-          ],
-          answer: null, // User's selected answer
-        },   
-      ]
+  const TaskCompletion = ({ isPatient, allSelectedAnswers, language }) => {
+    // Calculate score
+    const calculateScore = () => {
+      let totalScore = 0;
+      Object.values(allSelectedAnswers).forEach((selections) => {
+        totalScore += selections.length;
+      });
+      return totalScore;
+    };
+  
+    if (isPatient) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-screen p-8 bg-white max-w-2xl mx-auto">
+          <div className="text-center w-full">
+            <h2 className="text-3xl font-bold mb-8 text-gray-800">
+              {language === 'hindi' ? 'धन्यवाद!' : 'Thank You!'}
+            </h2>
+            <div className="space-y-4">
+              <p className="text-lg">
+                {language === 'hindi' 
+                  ? 'आपका परीक्षण पूरा हो गया है। परिणाम आपके स्वास्थ्य देखभाल प्रदाता द्वारा साझा किए जाएंगे।'
+                  : 'Your test has been completed. The results will be shared by your healthcare provider.'}
+              </p>
+              <p className="text-base text-gray-600">
+                {language === 'hindi'
+                  ? 'कृपया अपने स्वास्थ्य देखभाल प्रदाता से संपर्क करें।'
+                  : 'Please contact your healthcare provider for follow-up.'}
+              </p>
+            </div>
+          </div>
+        </div>
+      );
     }
-  ];
+  
+    // For caregivers, show the full results
+    const score = calculateScore();
+    const getCognitiveStatus = (score) => {
+      if (score >= 24) {
+        return {
+          english: 'Normal Cognition',
+          hindi: 'सामान्य संज्ञानात्मक स्थिति'
+        };
+      } else if (score >= 19) {
+        return {
+          english: 'Mild Cognitive Impairment',
+          hindi: 'हल्की संज्ञानात्मक क्षति'
+        };
+      } else if (score >= 10) {
+        return {
+          english: 'Moderate Cognitive Impairment',
+          hindi: 'मध्यम संज्ञानात्मक क्षति'
+        };
+      } else {
+        return {
+          english: 'Severe Cognitive Impairment',
+          hindi: 'गंभीर संज्ञानात्मक क्षति'
+        };
+      }
+    };
+  
+    const status = getCognitiveStatus(score);
+  
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-8 bg-white max-w-2xl mx-auto">
+        <div className="text-center w-full">
+          <h2 className="text-3xl font-bold mb-8 text-gray-800">
+            {language === 'hindi' ? 'परीक्षण परिणाम' : 'Test Results'}
+          </h2>
+          
+          <div className="mb-8">
+            <div className="text-4xl font-bold text-blue-600 mb-4">
+              {score}/30
+            </div>
+            <h3 className="text-xl font-semibold mb-2 text-gray-700">
+              {language === 'hindi' ? 'संज्ञानात्मक स्थिति:' : 'Cognitive Status:'}
+            </h3>
+            <p className="text-lg text-blue-600 font-medium">
+              {status[language]}
+            </p>
+          </div>
+  
+          <div className="w-full max-w-md mx-auto mb-8">
+            <h3 className="text-xl font-semibold mb-4 text-center text-gray-700">
+              {language === 'hindi' ? 'स्कोर रेंज' : 'Score Ranges'}
+            </h3>
+            <div className="space-y-3">
+              <div className="p-3 bg-green-100 rounded">
+                <p>24-30: {language === 'hindi' ? 'सामान्य संज्ञानात्मक स्थिति' : 'Normal Cognition'}</p>
+              </div>
+              <div className="p-3 bg-yellow-100 rounded">
+                <p>19-23: {language === 'hindi' ? 'हल्की संज्ञानात्मक क्षति' : 'Mild Cognitive Impairment'}</p>
+              </div>
+              <div className="p-3 bg-orange-100 rounded">
+                <p>10-18: {language === 'hindi' ? 'मध्यम संज्ञानात्मक क्षति' : 'Moderate Cognitive Impairment'}</p>
+              </div>
+              <div className="p-3 bg-red-100 rounded">
+                <p>0-9: {language === 'hindi' ? 'गंभीर संज्ञानात्मक क्षति' : 'Severe Cognitive Impairment'}</p>
+              </div>
+            </div>
+          </div>
+  
+          <div className="text-center text-sm text-gray-600 bg-blue-50 p-4 rounded-lg">
+            <p>
+              {language === 'hindi' 
+                ? 'कृपया इन परिणामों की चर्चा रोगी के स्वास्थ्य देखभाल प्रदाता से करें।'
+                : 'Please discuss these results with the patient\'s healthcare provider.'}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
 
   const handleTabClick = (id) => {
-    setCountdown(60); // Reset countdown when switching tabs
+    // Prevent navigation to completed tasks
+    if (completedTasks.has(id)) {
+      return;
+    }
+
+    // Prevent going back to previous tasks
+    const currentTaskIndex = selectedTab;
+    if (id < currentTaskIndex) {
+      return;
+    }
+
+    setCountdown(60);
     setMediaURL("");
     mediaChunksRef.current = [];
   
@@ -206,7 +223,7 @@ function FileUploadForm() {
     } else {
       setShowInitialInstructions(false);
     }
-  };  
+  };   
   
 
 
@@ -366,6 +383,8 @@ function FileUploadForm() {
       setShowTick(true);
       setTimeout(() => {
         setShowTick(false);
+        // Mark current task as completed
+        setCompletedTasks(prev => new Set([...prev, selectedTab]));
         // Move to next task after successful submission
         const nextTab = selectedTab + 1;
         if (nextTab < tasks.length) {
@@ -421,10 +440,14 @@ function FileUploadForm() {
   );
 
   // Initial Instructions Component for the third task
-  const InitialInstructions = ({ onAccept, onDeny }) => (
+  const InitialInstructions = ({ onAccept, onDeny, setIsPatient, language }) => (
     <div className="initial-instructions-overlay">
       <div className="initial-instructions-content">
         <h2>{language === 'hindi' ? 'ऑनलाइन MMSE परीक्षण में आपका स्वागत है' : 'Welcome to the Online MMSE Test'}</h2>
+        
+        
+        
+  
         <p>
           {language === 'hindi' ? (
             <>
@@ -472,7 +495,7 @@ function FileUploadForm() {
             </>
           )}
         </p>
-
+  
         <p>{language === 'hindi' ? 'यदि आप "स्वीकार करें" पर क्लिक करते हैं, तो आप परीक्षण में भाग लेने के लिए सहमत हैं।' : 'By clicking "Accept," you agree to participate in the test.'}</p>
         <div style={{ marginTop: '20px' }}>
           <button className="accept-button" onClick={onAccept}>
@@ -486,47 +509,59 @@ function FileUploadForm() {
     </div>
   );
 
-  const MultipleChoiceTask = ({ task, language, setTestCompleted }) => {
-    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [allSelectedAnswers, setAllSelectedAnswers] = useState({});
-
+  const MultipleChoiceTask = ({
+    task,
+    language,
+    setTestCompleted,
+    currentQuestionIndex,
+    setCurrentQuestionIndex,
+    allSelectedAnswers,
+    setAllSelectedAnswers,
+  }) => {
     const handleNext = () => {
       if (currentQuestionIndex < task.questions.length - 1) {
         setCurrentQuestionIndex(currentQuestionIndex + 1);
       }
     };
-
+  
     const handlePrevious = () => {
       if (currentQuestionIndex > 0) {
         setCurrentQuestionIndex(currentQuestionIndex - 1);
       }
     };
-
+  
     const handleAnswerSelect = (choiceIndex) => {
       setAllSelectedAnswers((prevSelected) => {
-        const currentSelections = prevSelected[currentQuestionIndex] || [];
-        let updatedSelections;
-
-        if (currentSelections.includes(choiceIndex)) {
-          // Deselect if already selected
-          updatedSelections = currentSelections.filter((index) => index !== choiceIndex);
-        } else {
-          // Select if not already selected
-          updatedSelections = [...currentSelections, choiceIndex];
+        const updatedAnswers = { ...prevSelected };
+        
+        // Initialize array for current question if it doesn't exist
+        if (!updatedAnswers[currentQuestionIndex]) {
+          updatedAnswers[currentQuestionIndex] = [];
         }
-
-        return {
-          ...prevSelected,
-          [currentQuestionIndex]: updatedSelections,
-        };
+        
+        const currentAnswers = updatedAnswers[currentQuestionIndex];
+        
+        // Toggle selection
+        const index = currentAnswers.indexOf(choiceIndex);
+        if (index === -1) {
+          // Add the choice if not already selected
+          updatedAnswers[currentQuestionIndex] = [...currentAnswers, choiceIndex];
+        } else {
+          // Remove the choice if already selected
+          updatedAnswers[currentQuestionIndex] = currentAnswers.filter(
+            (idx) => idx !== choiceIndex
+          );
+        }
+        
+        return updatedAnswers;
       });
     };
-
+  
     const totalSelectedCount = Object.values(allSelectedAnswers).reduce(
       (total, selections) => total + selections.length,
       0
     );
-
+  
     const currentSelections = allSelectedAnswers[currentQuestionIndex] || [];
 
     return (
@@ -541,17 +576,27 @@ function FileUploadForm() {
           <div style={{ textAlign: 'center', marginTop: '10px' }}>
             <img src="/pentagon.png" alt="Shape for copying" style={{ maxWidth: '45%', height: 'auto' }} />
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '10px' }}>
-              {task.questions[currentQuestionIndex].choices.map((choice, index) => (
-                <label key={index} style={{ textAlign: 'center', margin: '5px 0' }}>
-                  <input
-                    type="checkbox"
-                    name="option"
-                    checked={currentSelections.includes(index)}
-                    onChange={() => handleAnswerSelect(index)}
-                  />
-                  {choice[language]}
-                </label>
-              ))}
+            {task.questions[currentQuestionIndex].choices.map((choice, index) => (
+              <label
+                key={index}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  margin: '5px 0',
+                  width: '200px',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={currentSelections.includes(index)}
+                  onChange={() => handleAnswerSelect(index)}
+                  style={{ marginRight: '10px' }}
+                />
+                {choice[language]}
+              </label>
+            ))}
+
             </div>
           </div>
         ) : (
@@ -670,14 +715,21 @@ function FileUploadForm() {
     showInitialInstructions,
     setShowInitialInstructions,
     setTestCompleted,
+    allSelectedAnswers,
+    setAllSelectedAnswers,
+    setIsPatient,
+    currentQuestionIndex,
+    setCurrentQuestionIndex
   }) => {
     if (task.id === 2) {
-      // If test is completed, show "Test Complete" message
       if (testCompleted) {
         return (
-          <div className="test-complete-message">
-            <h2>{language === 'hindi' ? 'परीक्षण पूरा' : 'Test Complete'}</h2>
-            <p>{language === 'hindi' ? 'आपके समय के लिए धन्यवाद।' : 'Thank you for your time.'}</p>
+          <div className="w-full flex justify-center items-center">
+            <TaskCompletion 
+              isPatient={isPatient}
+              allSelectedAnswers={allSelectedAnswers} 
+              language={language}
+            />
           </div>
         );
       }
@@ -690,6 +742,8 @@ function FileUploadForm() {
               setShowInitialInstructions(false);
               setTestCompleted(true);
             }}
+            setIsPatient={setIsPatient}  // Pass it here
+            language={language}
           />
         );
       }
@@ -700,8 +754,12 @@ function FileUploadForm() {
           task={task}
           language={language}
           setTestCompleted={setTestCompleted}
+          allSelectedAnswers={allSelectedAnswers}
+          setAllSelectedAnswers={setAllSelectedAnswers}
+          currentQuestionIndex={currentQuestionIndex}
+          setCurrentQuestionIndex={setCurrentQuestionIndex}
         />
-      );
+      );      
     }
 
     return (
@@ -851,16 +909,26 @@ return (
               .map((task) => (
                 <div
                   key={task.id}
-                  className={`tab ${selectedTab === task.id ? 'active' : ''}`}
+                  className={`tab ${selectedTab === task.id ? 'active' : ''} 
+                            ${completedTasks.has(task.id) ? 'completed' : ''}
+                            ${task.id < selectedTab ? 'disabled' : ''}`}
                   onClick={() => handleTabClick(task.id)}
+                  style={{
+                    cursor: completedTasks.has(task.id) || task.id < selectedTab ? 'not-allowed' : 'pointer',
+                    opacity: completedTasks.has(task.id) || task.id < selectedTab ? 0.6 : 1,
+                    backgroundColor: completedTasks.has(task.id) ? '#e0e0e0' : undefined
+                  }}
                 >
                   {task.title[language]}
+                  {completedTasks.has(task.id) && (
+                    <span style={{ marginLeft: '5px', color: 'green' }}>✓</span>
+                  )}
                 </div>
               ))}
           </div>
           
           <div className="content">
-            <h1 className="task-title">{tasks[selectedTab].title[language]}</h1>
+            {/* <h1 className="task-title">{tasks[selectedTab].title[language]}</h1> */}
             
             <TaskContent
               task={tasks[selectedTab]}
@@ -869,8 +937,12 @@ return (
               showInitialInstructions={showInitialInstructions}
               setShowInitialInstructions={setShowInitialInstructions}
               setTestCompleted={setTestCompleted}
+              allSelectedAnswers={allSelectedAnswers}
+              setAllSelectedAnswers={setAllSelectedAnswers}
+              setIsPatient={setIsPatient}  
+              currentQuestionIndex={currentQuestionIndex}
+              setCurrentQuestionIndex={setCurrentQuestionIndex}
             />
-
             {selectedTab !== 2 && (
               <form
                 onSubmit={handleSubmit}

@@ -120,10 +120,10 @@ app.post('/save', (req, res) => {
       } else {
         // Insert new record
         const insertQuery = `
-          INSERT INTO user_audio (name, age, audio, video)
-          VALUES ($1, $2, $3, $4)
-          RETURNING *
-        `;
+        INSERT INTO user_audio (name, age, audio, video, msme)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING *
+      `;
         
         result = await pool.query(insertQuery, [name, age, audioPath, videoPath]);
         console.log('Inserted new record:', result.rows[0]);
