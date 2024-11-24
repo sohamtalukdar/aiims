@@ -598,7 +598,7 @@ const handleSubmit = async (e) => {
     );
   
     const currentSelections = allSelectedAnswers[currentQuestionIndex] || [];
-
+    
     return (
       <div className="multiple-choice-task">
         <h3 style={{ textAlign: 'center', marginBottom: '5px' }}>
