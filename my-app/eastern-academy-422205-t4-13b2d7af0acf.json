@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "eastern-academy-422205-t4",
+  "private_key_id": "13b2d7af0acf842d5f1887f945269f894c304a8a",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC90kxEHJx0Pyt6\nB9jFEYmbdPpO4sFJ1DhZ38DdTIATYqr3UuXdXchf6/OAzvd96MIN4xtRMgbHaFZU\nMLYP6HwCOUd/h6TRcW2lEePyjg35leI6cMLS6wNPBfTN09h9ZYo7apm/H1ITkhiA\nrkSO0bdbdsWwI/C0//Ck0Vnggc2ku7PEnGM4vKjc72XdMAaNiUh96SRALLUqIFX0\n6eGvCtiXBw0+Wfn+M/nCTCu/aP0OGZG0tW34HGfc83QkmVYfmsasYFKT09LsVWlY\nf0nqPwB9HsnTNPxRzuQHd4pw91z4TsMdV862xSGmA2NrIu5jST/Ws1ojTPJeV3hf\n53CBbmAtAgMBAAECggEABvscvbiFP6uYqe4JJWsF5SC1MxqyjxUhIwHQMizl3Oo/\nbV8Wf9o65aqXLVqIzlzPN8ftZKjZVPlCWFBLGDF6aT6Gbms+C+UHA9x9+WXXn7rI\nzVHOTtSm+rLP+pRBUJATOFvGq1Lq9GtM2WN1tzO0cZNGclOwC4gKGpWhOSXgITm+\ncVmgtUmPDjqJ7vn5ieh1b4pIOtCBz8L3EqfwYERAd9Xhgq26Kye84K2l3DYBeG+M\numZXwrVcEKFNqY+P3gGVIW0JEgtrlQrhS2RmA1WsaGPqDwDB7jd1F/wG9/Tr3SOv\nbu/5ofP+24QPKzTaaq6Mt67FqmLDoHd2I/GfRsAioQKBgQD27oTz3sSTHqwoyDUo\nZXtuyROsYLvikbaWeIPdaP1zhh9m9FXPnwCiON0L64IOabgigAbQBSBXna7sRTPO\nIfuz1QkbX13DesiiUfIwyNglWMD2Al0e5ywwr5vpyTWN1IpvHbYKEg3dKHp9WYuB\n6di3P16Y2Rqa3Lq4S61i3lbUFQKBgQDEyt4i4q6nXZt8eu9iYrpJRmZkO+Wtikn2\n+HTnmE1to5KDXq6Hnr+bNyrrX1We/1zJN8wbRxgmTGumj+Gb4Kls+Xtcb3xovh/e\n+uZstS40+N54Wh01k/ReTYVdUQiL20UQW7g5qGNQWnio93tAw1kEf5fTKOJnI04W\nJ8DLuQjpuQKBgHIGjIBskwt4s3kVkm54BjqPQbVs6fXi4ZS0S/gW/kq1WZTaKTH5\ns3o1leVmOCVdrjjIM90lMN0kpFzYS+bZDHjrXAw2yn51GWbTPmpGpIECbgBr8QJP\nL7m/rdiUIFXBGrfa2W/nDF3ezklJ60DvcjKUYaNlRYLTgKmP0J4CG8hNAoGARD/7\nZGvrmL39M+HK7ftBkjIpRrADSvmAB3hJyxxmFhU5tff7Xauv1hv+9ZydrEPyIRMJ\n5Zf1hyrP1vdljlMPT20C3J8JraXqlcG8co0vlk2Nkn3mTXOft6j5DNESvrZwMGku\n7kg5EWAfIrKZ+28Ei2vY8vHl+1EiPsrQsZbdwXkCgYEA26cg96t+YS/OEnQunlsf\nExvNBxYEbCE5PmloD6Ynw/lvUiqxmUCHHG0XHSxkVNE6tMxIevfiLCT2H8udLklF\nI2tnlIyXLO3wr3tpQEmd1t6cvEUa2JFx7FHQHenx0/9nE4D49TZ6dWoN+uV1Wjon\nvcepSZiX/5VPKJ7IQ6lgA+s=\n-----END PRIVATE KEY-----\n",
+  "client_email": "storage-access@eastern-academy-422205-t4.iam.gserviceaccount.com",
+  "client_id": "117494218411250836049",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/storage-access%40eastern-academy-422205-t4.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

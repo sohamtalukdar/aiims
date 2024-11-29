@@ -45,33 +45,41 @@ function NameAgeForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate both fields before submission
+    // Validate fields
     const isNameValid = validateName(name);
     const isAgeValid = validateAge(age);
-
+  
     if (!isNameValid || !isAgeValid) {
-      return; // Don't submit if validation fails
+      alert('Please enter valid name and age.');
+      return;
     }
-
-    console.log("Submit button clicked");
-    
+  
     try {
-      const response = await fetch('http://localhost:5001/save', {
+      console.log('Submitting:', { name, age });
+  
+      const response = await fetch('http://localhost:5001/save', { // Update URL if deployed
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, age }),
       });
   
-      const data = await response.json();
-      console.log(data.message);
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('Server responded with error:', error);
+        alert(`Server Error: ${error.error}`);
+        return;
+      }
   
+      const result = await response.json();
+      console.log('Submit success:', result);
+  
+      // Navigate to the upload page with state
       navigate('/upload', { state: { name, age } });
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Submit failed:', error);
+      alert('Network error. Please try again.');
     }
-  };
+  };  
 
   return (
     <div className="app">

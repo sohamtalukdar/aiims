@@ -4,6 +4,7 @@ import tasks from './data/tasks';
 import './App.css';
 
 function FileUploadForm() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { state, setIsPatient } = useLocation();
   const [showModal, setShowModal] = useState(true);
   const [selectedTab, setSelectedTab] = useState(0);
@@ -44,13 +45,9 @@ useEffect(() => {
   };
 }, []);
 
-
-// Uncomment and modify the keyboard shortcut handler
-// Add this useEffect in your FileUploadForm component
 useEffect(() => {
   const blockRefresh = (e) => {
     if (!showInitialPopup) { // If test has started
-      // Block all refresh attempts
       e.preventDefault();
       e.stopPropagation();
       
@@ -59,7 +56,6 @@ useEffect(() => {
         e.preventDefault();
       }
       e.returnValue = '';
-      
       // Can also show a message if needed
       return "Test is in progress. Refresh is disabled.";
     }
@@ -294,91 +290,82 @@ useEffect(() => {
 
   // Inside the handleSubmit function in FileUploadForm.js, update it as follows:
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  if (!state?.name || !state?.age) {
-    alert('Name and age are required');
-    return;
-  }
-
-  const currentBlob = selectedTab === 1 ? videoBlob : audioBlob;
-  if (!currentBlob) {
-    alert(`Please record ${selectedTab === 1 ? 'video' : 'audio'} before submitting.`);
-    return;
-  }
-
-  // Log the blob details
-  console.log('Submitting blob:', {
-    type: currentBlob.type,
-    size: currentBlob.size,
-    tab: selectedTab
-  });
-
-  const formData = new FormData();
-  formData.append('name', state.name);
-  formData.append('age', state.age);
-
-  formData.append('msme', state.msme || '');
-  console.log('Appending msme:', state.msme);
-
-
-  // Add logging to see what's being appended
-  if (selectedTab === 1) {
-    formData.append('video', videoBlob, 'video.webm');
-    console.log('Appending video blob:', videoBlob);
-  } else {
-    formData.append('audio', audioBlob, 'audio.webm');
-    console.log('Appending audio blob:', audioBlob);
-  }
-
-  // Log the FormData (note: FormData can't be directly logged)
-  for (let pair of formData.entries()) {
-    console.log('FormData entry:', pair[0], pair[1]);
-  }
-
-  try {
-    console.log('Starting upload...');
-    const response = await fetch('http://localhost:5001/save', {
-      method: 'POST',
-      body: formData
-    });
-
-    console.log('Response status:', response.status);
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Server error:', errorData);
-      throw new Error(`Server error: ${errorData.error || response.status}`);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+  
+    // Prevent multiple submissions
+    if (isSubmitting) {
+      return;
     }
-
-    const result = await response.json();
-    console.log(`${selectedTab === 1 ? 'Video' : 'Audio'} upload result:`, result);
-    
-    setShowTick(true);
-    setTimeout(() => {
-      setShowTick(false);
-      // Mark current task as completed
-      setCompletedTasks(prev => new Set([...prev, selectedTab]));
-      // Move to next task after successful submission
-      const nextTab = selectedTab + 1;
-      if (nextTab < tasks.length) {
-        handleTabClick(nextTab);
+  
+    setIsSubmitting(true); // Lock form submission
+  
+    try {
+      // Ensure name and age are provided
+      if (!state?.name || !state?.age) {
+        alert('Name and age are required to submit the recording.');
+        setIsSubmitting(false); // Unlock on error
+        return;
       }
-    }, 1);
-
-    setMediaURL("");
-    if (selectedTab === 1) {
-      setVideoBlob(null);
-    } else {
-      setAudioBlob(null);
+  
+      const currentBlob = selectedTab === 1 ? videoBlob : audioBlob;
+      if (!currentBlob) {
+        alert(`Please record ${selectedTab === 1 ? 'video' : 'audio'} before submitting.`);
+        setIsSubmitting(false); // Unlock on error
+        return;
+      }
+  
+      const formData = new FormData();
+      formData.append('name', state.name);
+      formData.append('age', state.age);
+      if (selectedTab === 1) {
+        formData.append('video', currentBlob, 'video.webm');
+      } else {
+        formData.append('audio', currentBlob, 'audio.webm');
+      }
+  
+      const response = await fetch('http://localhost:5001/save', {
+        method: 'POST',
+        body: formData,
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Server error:', errorData);
+        alert(`Upload failed: ${errorData.error}`);
+        setIsSubmitting(false); // Unlock on error
+        return;
+      }
+  
+      const result = await response.json();
+      console.log('Upload result:', result);
+  
+      // Process success (e.g., show tick, move to next task)
+      setShowTick(true);
+      setTimeout(() => {
+        setShowTick(false);
+        setCompletedTasks((prev) => new Set([...prev, selectedTab]));
+        const nextTab = selectedTab + 1;
+        if (nextTab < tasks.length) {
+          handleTabClick(nextTab);
+        }
+      }, 1000);
+  
+      setMediaURL('');
+      if (selectedTab === 1) {
+        setVideoBlob(null);
+      } else {
+        setAudioBlob(null);
+      }
+    } catch (error) {
+      console.error('Submission error:', error);
+      alert('Network error occurred. Please try again.');
+    } finally {
+      setIsSubmitting(false); // Always unlock submission
     }
-
-  } catch (error) {
-    console.error('Upload failed:', error);
-    alert(`Upload failed: ${error.message}. Please check console for details.`);
-  }
-};
+  };
+  
+  
 
   // Instruction Modal Component
   const InstructionModal = ({ onClose }) => (
@@ -766,8 +753,6 @@ const handleSubmit = async (e) => {
     );
   };
 
-  // Initial Popup Component
-  // Initial Popup Component
 const InitialPopup = ({ language, setLanguage, onClose }) => (
   <div
     className="initial-popup-overlay"
@@ -978,7 +963,7 @@ const InitialPopup = ({ language, setLanguage, onClose }) => (
 
                   <button 
                     type="submit" 
-                    disabled={!mediaURL} 
+                    disabled={!mediaURL || isSubmitting} 
                     className="custom-button"
                   >
                     {language === 'hindi' ? 'जमा करें' : 'Submit'}
