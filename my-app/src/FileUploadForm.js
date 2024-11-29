@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect} from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom'; // Add useNavigate here
 import tasks from './data/tasks';
 import './App.css';
 
 function FileUploadForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { state, setIsPatient } = useLocation();
+  const { state } = useLocation();
+  const navigate = useNavigate();
   const [showModal, setShowModal] = useState(true);
   const [selectedTab, setSelectedTab] = useState(0);
   const [language, setLanguage] = useState('english');
@@ -27,7 +28,15 @@ function FileUploadForm() {
   const [allSelectedAnswers, setAllSelectedAnswers] = useState(() => {
     const savedData = sessionStorage.getItem("allSelectedAnswers");
     return savedData ? JSON.parse(savedData) : {};
-});
+  });
+
+
+
+useEffect(() => {
+  if (!state?.patientId || !state?.name || !state?.age) {
+    navigate('/');
+  }
+}, [state, navigate]);
 
 useEffect(() => {
     sessionStorage.setItem("allSelectedAnswers", JSON.stringify(allSelectedAnswers));
@@ -106,6 +115,12 @@ useEffect(() => {
   
 
   const TaskCompletion = ({ language }) => {
+    const navigate = useNavigate(); // Add this hook at the top
+  
+    const handleExit = () => {
+      navigate('/'); // This will redirect to the name form
+    };
+  
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-8 bg-white max-w-2xl mx-auto">
         <div className="text-center w-full">
@@ -123,6 +138,26 @@ useEffect(() => {
                 ? 'कृपया अपने स्वास्थ्य देखभाल प्रदाता से संपर्क करें।'
                 : 'Please contact your healthcare provider for follow-up.'}
             </p>
+            
+            {/* Add Exit Button */}
+            <button
+              onClick={handleExit}
+              style={{
+                marginTop: '2rem',
+                padding: '10px 20px',
+                backgroundColor: '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseOver={(e) => e.target.style.backgroundColor = '#0056b3'}
+              onMouseOut={(e) => e.target.style.backgroundColor = '#007bff'}
+            >
+              {language === 'hindi' ? 'बाहर निकलें' : 'Exit'}
+            </button>
           </div>
         </div>
       </div>
@@ -293,31 +328,31 @@ useEffect(() => {
   const handleSubmit = async (e) => {
     e.preventDefault();
   
-    // Prevent multiple submissions
     if (isSubmitting) {
       return;
     }
   
-    setIsSubmitting(true); // Lock form submission
+    setIsSubmitting(true);
   
     try {
-      // Ensure name and age are provided
-      if (!state?.name || !state?.age) {
-        alert('Name and age are required to submit the recording.');
-        setIsSubmitting(false); // Unlock on error
-        return;
-      }
-  
-      const currentBlob = selectedTab === 1 ? videoBlob : audioBlob;
-      if (!currentBlob) {
-        alert(`Please record ${selectedTab === 1 ? 'video' : 'audio'} before submitting.`);
-        setIsSubmitting(false); // Unlock on error
+      if (!state?.patientId || !state?.name || !state?.age) {
+        alert('Patient information is missing. Please start over.');
+        navigate('/');
         return;
       }
   
       const formData = new FormData();
       formData.append('name', state.name);
       formData.append('age', state.age);
+      formData.append('patientId', state.patientId);
+  
+      const currentBlob = selectedTab === 1 ? videoBlob : audioBlob;
+      if (!currentBlob) {
+        alert(`Please record ${selectedTab === 1 ? 'video' : 'audio'} before submitting.`);
+        setIsSubmitting(false);
+        return;
+      }
+  
       if (selectedTab === 1) {
         formData.append('video', currentBlob, 'video.webm');
       } else {
@@ -331,16 +366,12 @@ useEffect(() => {
   
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Server error:', errorData);
-        alert(`Upload failed: ${errorData.error}`);
-        setIsSubmitting(false); // Unlock on error
-        return;
+        throw new Error(errorData.error || 'Upload failed');
       }
   
       const result = await response.json();
       console.log('Upload result:', result);
   
-      // Process success (e.g., show tick, move to next task)
       setShowTick(true);
       setTimeout(() => {
         setShowTick(false);
@@ -359,9 +390,9 @@ useEffect(() => {
       }
     } catch (error) {
       console.error('Submission error:', error);
-      alert('Network error occurred. Please try again.');
+      alert(error.message || 'Error uploading file. Please try again.');
     } finally {
-      setIsSubmitting(false); // Always unlock submission
+      setIsSubmitting(false);
     }
   };
   
@@ -727,6 +758,16 @@ useEffect(() => {
       <div className="task-content">
         {task.image ? (
           <>
+          {/* Added click to enlarge text */}
+        <div style={{ 
+          textAlign: 'left', 
+          marginBottom: '5px',
+          fontSize: '14px',
+          color: '#666',
+          cursor: 'pointer'
+        }}>
+          {language === 'hindi' ? 'ज़ूम इन/ज़ूम आउट करने के लिए छवि पर क्लिक करें' : 'Click on the image to zoom in / zoom out'} 🔍
+        </div>
             <img
               src={task.image}
               alt="Task"
@@ -847,205 +888,194 @@ const InitialPopup = ({ language, setLanguage, onClose }) => (
   </div>
 );
 
-  return (
-    <div className="app">
-      {showInitialPopup ? (
-        <InitialPopup
-          language={language}
-          setLanguage={setLanguage}
-          onClose={() => setShowInitialPopup(false)}
-        />
-      ) : (
-        <>
-          {showModal && <InstructionModal onClose={() => setShowModal(false)} />}
+return (
+  <div className="app">
+    {/* Patient ID Display */}
+    {state?.patientId && (
+      <div style={{
+        position: 'fixed',
+        top: '20px',
+        right: '20px',
+        backgroundColor: 'white',
+        padding: '8px 12px',
+        borderRadius: '4px',
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+        zIndex: 1000,
+        fontFamily: 'monospace',
+        fontSize: '14px',
+        border: '1px solid #ddd'
+      }}>
+        Patient ID: {state.patientId}
+      </div>
+    )}
 
-          <div className="gradient-bg" />
-          <div className="container">
-            <div className="tabs">
-              {tasks
-                .filter((task) => !(task.id === 2 && testCompleted))
-                .map((task) => (
-                  <div
-                    key={task.id}
-                    className={`tab ${selectedTab === task.id ? 'active' : ''} 
-                              ${completedTasks.has(task.id) ? 'completed' : ''}
-                              ${task.id < selectedTab ? 'disabled' : ''}`}
-                    onClick={() => handleTabClick(task.id)}
-                    style={{
-                      cursor: completedTasks.has(task.id) || task.id < selectedTab ? 'not-allowed' : 'pointer',
-                      opacity: completedTasks.has(task.id) || task.id < selectedTab ? 0.6 : 1,
-                      backgroundColor: completedTasks.has(task.id) ? '#e0e0e0' : undefined
-                    }}
-                  >
-                    {task.title[language]}
-                    {completedTasks.has(task.id) && (
-                      <span style={{ marginLeft: '5px', color: 'green' }}>✓</span>
-                    )}
-                  </div>
-                ))}
-            </div>
-            
-            <div className="content">
-              <TaskContent
-                task={tasks[selectedTab]}
-                language={language}
-                testCompleted={testCompleted}
-                showInitialInstructions={showInitialInstructions}
-                setShowInitialInstructions={setShowInitialInstructions}
-                setTestCompleted={setTestCompleted}
-                allSelectedAnswers={allSelectedAnswers}
-                setAllSelectedAnswers={setAllSelectedAnswers}
-                setIsPatient={setIsPatient}  
-                currentQuestionIndex={currentQuestionIndex}
-                setCurrentQuestionIndex={setCurrentQuestionIndex}
-              />
-              {selectedTab !== 2 && (
-                <form
-                  onSubmit={handleSubmit}
-                  className="media-form"
+    {/* Initial Test Setup Modal */}
+    {showInitialPopup ? (
+      <InitialPopup
+        language={language}
+        setLanguage={setLanguage}
+        onClose={() => setShowInitialPopup(false)}
+      />
+    ) : (
+      <>
+        {/* Instructions Modal */}
+        {showModal && <InstructionModal onClose={() => setShowModal(false)} />}
+
+        {/* Main Content */}
+        <div className="gradient-bg" />
+        <div className="container">
+          {/* Navigation Tabs */}
+          <div className="tabs">
+            {tasks
+              .filter((task) => !(task.id === 2 && testCompleted))
+              .map((task) => (
+                <div
+                  key={task.id}
+                  className={`tab ${selectedTab === task.id ? 'active' : ''} 
+                            ${completedTasks.has(task.id) ? 'completed' : ''}
+                            ${task.id < selectedTab ? 'disabled' : ''}`}
+                  onClick={() => handleTabClick(task.id)}
                   style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '15px',
-                    marginTop: '20px',
-                    position: 'relative',
+                    cursor: completedTasks.has(task.id) || task.id < selectedTab ? 'not-allowed' : 'pointer',
+                    opacity: completedTasks.has(task.id) || task.id < selectedTab ? 0.6 : 1,
+                    backgroundColor: completedTasks.has(task.id) ? '#e0e0e0' : undefined
                   }}
                 >
-                  <div className="media-controls">
-                    {mediaURL ? (
-                      <>
-                        {selectedTab === 1 ? (
-                          <video src={mediaURL} controls />
-                        ) : (
-                          <audio src={mediaURL} controls />
-                        )}
-                        <button 
-                          type="button" 
-                          onClick={handleReRecord} 
-                          className="custom-button"
-                        >
-                          {language === 'hindi' ? 'पुनः रिकॉर्ड करें' : 'Re-record'}
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <div style={{ textAlign: 'center', marginTop: '10px' }}>
-                          {isRecording && <p>Time remaining: {countdown}s</p>}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={handleMediaRecord}
-                          className="custom-button"
-                          style={{
-                            marginBottom: '10px',
-                            padding: '8px 12px',
-                            cursor: 'pointer',
-                            backgroundColor: '#007bff',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                          }}
-                        >
-                          {isRecording
-                            ? (language === 'hindi' ? 'रिकॉर्डिंग रोकें' : 'Stop Recording')
-                            : language === 'hindi'
-                            ? selectedTab === 1
-                              ? 'वीडियो रिकॉर्ड करें'
-                              : 'आवाज़ रिकॉर्ड करें'
-                            : selectedTab === 1
-                            ? 'Record Video'
-                            : 'Record Voice'}
-                        </button>
-                      </>
-                    )}
-                  </div>
-
-                  <button 
-                    type="submit" 
-                    disabled={!mediaURL || isSubmitting} 
-                    className="custom-button"
-                  >
-                    {language === 'hindi' ? 'जमा करें' : 'Submit'}
-                  </button>
-
-                  {showTick && <span className="tick">✔</span>}
-                </form>
-              )}
-            </div>
+                  {task.title[language]}
+                  {completedTasks.has(task.id) && (
+                    <span style={{ marginLeft: '5px', color: 'green' }}>✓</span>
+                  )}
+                </div>
+              ))}
           </div>
 
-          {/* Custom Refresh Warning Dialog */}
-          {showRefreshWarning && (
-            <div 
-              className="modal-overlay"
-              style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                zIndex: 9999
-              }}
-            >
-              <div 
-                className="modal-content"
+          {/* Task Content Area */}
+          <div className="content">
+            <TaskContent
+              task={tasks[selectedTab]}
+              language={language}
+              testCompleted={testCompleted}
+              showInitialInstructions={showInitialInstructions}
+              setShowInitialInstructions={setShowInitialInstructions}
+              setTestCompleted={setTestCompleted}
+              allSelectedAnswers={allSelectedAnswers}
+              setAllSelectedAnswers={setAllSelectedAnswers}
+              currentQuestionIndex={currentQuestionIndex}
+              setCurrentQuestionIndex={setCurrentQuestionIndex}
+            />
+
+            {/* Media Recording Form */}
+            {selectedTab !== 2 && (
+              <form
+                onSubmit={handleSubmit}
+                className="media-form"
                 style={{
-                  backgroundColor: 'white',
-                  padding: '20px',
-                  borderRadius: '8px',
-                  maxWidth: '400px',
-                  width: '90%'
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '15px',
+                  marginTop: '20px'
                 }}
               >
-                <h2 style={{ marginBottom: '15px', fontSize: '1.2em', fontWeight: 'bold' }}>
-                  {language === 'hindi' ? 'पृष्ठ रीफ्रेश की पुष्टि करें' : 'Confirm Page Refresh'}
-                </h2>
-                <p style={{ marginBottom: '20px', color: '#666' }}>
-                  {language === 'hindi' 
-                    ? 'पृष्ठ को रीफ्रेश करने से सभी वर्तमान प्रविष्टियां हट जाएंगी। क्या आप जारी रखना चाहते हैं?'
-                    : 'Refreshing the page will remove all current entries. Do you want to continue?'}
-                </p>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                  <button
-                    onClick={handleRefreshCancel}
-                    className="custom-button"
-                    style={{
-                      padding: '8px 16px',
-                      backgroundColor: '#6c757d',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {language === 'hindi' ? 'रद्द करें' : 'Cancel'}
-                  </button>
-                  <button
-                    onClick={handleRefreshConfirm}
-                    className="custom-button"
-                    style={{
-                      padding: '8px 16px',
-                      backgroundColor: '#007bff',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {language === 'hindi' ? 'रीफ्रेश करें' : 'Refresh'}
-                  </button>
+                <div className="media-controls">
+                {mediaURL ? (
+                    <div className="media-playback">
+                      {selectedTab === 1 ? (
+                        <video 
+                          src={mediaURL} 
+                          controls
+                          style={{
+                            maxWidth: '350px',  // Set maximum width
+                            width: '100%',      // Responsive width
+                            height: 'auto',     // Maintain aspect ratio
+                            marginBottom: '10px' // Add some spacing
+                          }} 
+                        />
+                      ) : (
+                        <audio src={mediaURL} controls />
+                      )}
+                      <button 
+                        type="button" 
+                        onClick={handleReRecord} 
+                        className="custom-button"
+                      >
+                        {language === 'hindi' ? 'पुनः रिकॉर्ड करें' : 'Re-record'}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="recording-controls">
+                      <div style={{ textAlign: 'center', marginTop: '10px' }}>
+                        {isRecording && <p>Time remaining: {countdown}s</p>}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleMediaRecord}
+                        className="custom-button"
+                        style={{
+                          marginBottom: '10px',
+                          padding: '8px 12px',
+                          backgroundColor: '#007bff',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {isRecording
+                          ? (language === 'hindi' ? 'रिकॉर्डिंग रोकें' : 'Stop Recording')
+                          : language === 'hindi'
+                          ? selectedTab === 1
+                            ? 'वीडियो रिकॉर्ड करें'
+                            : 'आवाज़ रिकॉर्ड करें'
+                          : selectedTab === 1
+                          ? 'Record Video'
+                          : 'Record Voice'}
+                      </button>
+                    </div>
+                  )}
                 </div>
+
+                <button 
+                  type="submit" 
+                  disabled={!mediaURL || isSubmitting} 
+                  className="custom-button"
+                  style={{
+                    opacity: (!mediaURL || isSubmitting) ? 0.6 : 1
+                  }}
+                >
+                  {language === 'hindi' ? 'जमा करें' : 'Submit'}
+                </button>
+
+                {showTick && <span className="tick">✔</span>}
+              </form>
+            )}
+          </div>
+        </div>
+
+        {/* Refresh Warning Modal */}
+        {showRefreshWarning && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <h2>{language === 'hindi' ? 'पृष्ठ रीफ्रेश की पुष्टि करें' : 'Confirm Page Refresh'}</h2>
+              <p>
+                {language === 'hindi' 
+                  ? 'पृष्ठ को रीफ्रेश करने से सभी वर्तमान प्रविष्टियां हट जाएंगी। क्या आप जारी रखना चाहते हैं?'
+                  : 'Refreshing the page will remove all current entries. Do you want to continue?'}
+              </p>
+              <div className="button-container">
+                <button onClick={handleRefreshCancel} className="cancel-button">
+                  {language === 'hindi' ? 'रद्द करें' : 'Cancel'}
+                </button>
+                <button onClick={handleRefreshConfirm} className="confirm-button">
+                  {language === 'hindi' ? 'रीफ्रेश करें' : 'Refresh'}
+                </button>
               </div>
             </div>
-          )}
-        </>
-      )}
-    </div>
-  );
+          </div>
+        )}
+      </>
+    )}
+  </div>
+);
 }
 export default FileUploadForm;

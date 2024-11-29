@@ -8,7 +8,7 @@ function NameAgeForm() {
   const [ageError, setAgeError] = useState('');
   const navigate = useNavigate();
 
-  // Validation function for name
+  // Validation functions remain the same
   const validateName = (value) => {
     const nameRegex = /^[A-Za-z][A-Za-z\s]*$/;
     if (!nameRegex.test(value)) {
@@ -19,7 +19,6 @@ function NameAgeForm() {
     return true;
   };
 
-  // Validation function for age
   const validateAge = (value) => {
     const ageNum = parseInt(value);
     if (isNaN(ageNum) || ageNum < 1 || ageNum > 99) {
@@ -42,18 +41,34 @@ function NameAgeForm() {
     validateAge(value);
   };
 
+  // New patient ID generation function
+  const generatePatientId = () => {
+    const now = new Date();
+    
+    // Format: DDMMYYHHmmss
+    const formattedDate = now.toLocaleString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).replace(/[/,:\s]/g, ''); // Remove separators
+    return `PT${formattedDate}`;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate both fields before submission
     const isNameValid = validateName(name);
     const isAgeValid = validateAge(age);
 
     if (!isNameValid || !isAgeValid) {
-      return; // Don't submit if validation fails
+      return;
     }
 
-    console.log("Submit button clicked");
+    const patientId = generatePatientId(); // Generate the patient ID here
     
     try {
       const response = await fetch('http://localhost:5001/save', {
@@ -61,13 +76,13 @@ function NameAgeForm() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, age }),
+        body: JSON.stringify({ name, age, patientId }),
       });
   
       const data = await response.json();
       console.log(data.message);
   
-      navigate('/upload', { state: { name, age } });
+      navigate('/upload', { state: { name, age, patientId } });
     } catch (error) {
       console.error('Error:', error);
     }
