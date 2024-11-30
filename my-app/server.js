@@ -10,7 +10,7 @@ const port = 5001;
 
 // Initialize Google Cloud Storage
 const storage = new Storage({
-  keyFilename: path.join(__dirname, 'eastern-academy-422205-t4-13b2d7af0acf.json'),
+  keyFilename: path.join(__dirname, ''),
   projectId: 'eastern-academy-422205-t4',
 });
 
