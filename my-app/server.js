@@ -9,10 +9,13 @@ const app = express();
 const port = 5001;
 
 // Initialize Google Cloud Storage
+require('dotenv').config(); // Load environment variables
+
 const storage = new Storage({
-  keyFilename: path.join(__dirname, ''),
+  keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
   projectId: 'eastern-academy-422205-t4',
 });
+
 
 // Enable CORS and JSON parsing
 app.use(cors());
