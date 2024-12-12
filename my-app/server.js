@@ -17,7 +17,7 @@ app.use(express.json());
 const dbConfig = {
   host: 'localhost',
   user: 'root',
-  password: 'aiims123',
+  password: 'Bharat@1947',
   database: 'aiims'
 };
 
@@ -75,7 +75,6 @@ const upload = multer({
 ]);
 
 // Function: Move files from temp to permanent storage and store metadata in MySQL
-// Function: Move files from temp to permanent storage and store metadata in MySQL
 const storeFilesLocallyAndSaveMetadata = async (files, patientId, name, age) => {
   files = files || {};
   
@@ -132,7 +131,7 @@ const storeFilesLocallyAndSaveMetadata = async (files, patientId, name, age) => 
   }
 };
 
-// Update the save endpoint to handle the updated logic
+// Save Endpoint
 app.post('/save', (req, res) => {
   upload(req, res, async (err) => {
     if (err) {
@@ -174,96 +173,7 @@ app.post('/save', (req, res) => {
   });
 });
 
-// After storing files
-const { preprocessingQueue } = require('./queue'); // Require the queue you created
-
-app.post('/save', (req, res) => {
-  upload(req, res, async (err) => {
-    if (err) {
-      console.error('File upload error:', err);
-      return res.status(400).json({ error: err.message });
-    }
-
-    try {
-      const { name, age, patientId } = req.body;
-      
-      if (!patientId || !name || !age) {
-        throw new Error('Patient ID, name, and age are required.');
-      }
-
-      if (!req.files || ((!req.files.audio || req.files.audio.length === 0) && 
-          (!req.files.video || req.files.video.length === 0))) {
-        throw new Error('No audio or video files were uploaded.');
-      }
-
-      const { audioPath, videoPath } = await storeFilesLocallyAndSaveMetadata(req.files, patientId, name, age);
-
-      // Add a preprocessing job to the queue
-      await preprocessingQueue.add('preprocess-media', {
-        patientId,
-        audioPath,
-        videoPath
-      });
-
-      res.status(201).json({
-        message: 'Files uploaded successfully. Preprocessing will run in the background.',
-        patientId,
-        audioPath,
-        videoPath
-      });
-
-    } catch (error) {
-      console.error('Server error:', error);
-      if (req.files) {
-        Object.values(req.files).flat().forEach(file => {
-          if (fs.existsSync(file.path)) {
-            fs.unlinkSync(file.path);
-          }
-        });
-      }
-      res.status(500).json({ error: error.message });
-    }
-  });
-});
-
-
-// Endpoint: Save Test Results
-app.post('/save-test', async (req, res) => {
-  try {
-    const { patientId, testResults } = req.body;
-
-    if (!patientId || !testResults) {
-      return res.status(400).json({ error: 'Patient ID and test results are required.' });
-    }
-
-    const patientDir = path.join(baseDataDir, patientId);
-    if (!fs.existsSync(patientDir)) {
-      fs.mkdirSync(patientDir, { recursive: true });
-    }
-
-    const resultsFileName = `test_results_${Date.now()}.json`;
-    const resultsPath = path.join(patientDir, resultsFileName);
-    fs.writeFileSync(resultsPath, JSON.stringify(testResults, null, 2));
-
-    // Insert test results metadata into MySQL
-    const insertQuery = `
-      INSERT INTO patient_tests (patientId, resultType, resultsPath, timestamp)
-      VALUES (?, ?, ?, ?)
-    `;
-    await pool.execute(insertQuery, [patientId, 'mmse', resultsPath, new Date()]);
-
-    res.status(201).json({
-      message: 'Test results saved successfully',
-      patientId,
-      resultPath: resultsPath
-    });
-  } catch (error) {
-    console.error('Error saving test results:', error);
-    res.status(500).json({ error: 'Failed to save test results' });
-  }
-});
-
-// Example endpoint to test DB connectivity
+// Test Database Connectivity Endpoint
 app.get('/test-db', async (req, res) => {
   try {
     const [rows] = await pool.execute('SELECT 1 AS test');
@@ -283,47 +193,13 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Periodic cleanup of old files (optional)
-setInterval(() => {
-  fs.readdir(baseDataDir, (err, patientFolders) => {
-    if (err) {
-      console.error('Error reading base data directory:', err);
-      return;
-    }
-
-    const now = Date.now();
-    patientFolders.forEach(folder => {
-      const folderPath = path.join(baseDataDir, folder);
-      fs.readdir(folderPath, (err, files) => {
-        if (err) {
-          console.error('Error reading patient directory:', err);
-          return;
-        }
-
-        files.forEach(file => {
-          const filePath = path.join(folderPath, file);
-          fs.stat(filePath, (err, stats) => {
-            if (err) {
-              console.error('Error getting file stats:', err);
-              return;
-            }
-
-            // Example: remove files older than 24 hours (adjust as needed)
-            if (now - stats.mtime.getTime() > 24 * 3600000) {
-              fs.unlink(filePath, err => {
-                if (err) console.error('Error deleting old file:', err);
-              });
-            }
-          });
-        });
-      });
-    });
-  });
-}, 3600000);
-
 // Start Server
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
   console.log(`Data directory: ${baseDataDir}`);
   console.log(`Temporary uploads directory: ${tempDir}`);
 });
+
+
+
+
