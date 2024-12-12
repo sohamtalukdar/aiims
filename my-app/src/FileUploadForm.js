@@ -115,10 +115,27 @@ useEffect(() => {
   
 
   const TaskCompletion = ({ language }) => {
-    const navigate = useNavigate(); // Add this hook at the top
+    //const navigate = useNavigate(); // Add this hook at the top
+    const calculateScore = () => {
+    let totalScore = 0;
+    
+    // Iterate through all questions
+    Object.values(allSelectedAnswers).forEach((selections) => {
+      // Each correct selection adds 1 point
+      if (selections && selections.length > 0) {
+        totalScore += selections.length;
+      }
+    });
+    
+    return totalScore;
+  };
+
+  const score = calculateScore();
+  const maxScore = 30; // Maximum possible MMSE score
   
     const handleExit = () => {
-      navigate('/'); // This will redirect to the name form
+      sessionStorage.clear()
+      window.location.href = '/';
     };
   
     return (
@@ -127,6 +144,15 @@ useEffect(() => {
           <h2 className="text-3xl font-bold mb-8 text-gray-800">
             {language === 'hindi' ? 'धन्यवाद!' : 'Thank You!'}
           </h2>
+	  {/* Score Display */}
+        <div className="bg-blue-50 p-6 rounded-lg shadow-sm mb-8">
+          <h3 className="text-xl font-semibold mb-2">
+            {language === 'hindi' ? 'आपका स्कोर' : 'Your Score'}
+          </h3>
+          <div className="text-4xl font-bold text-blue-600">
+            {score} / {maxScore}
+          </div>
+        </div>
           <div className="space-y-4">
             <p className="text-lg">
               {language === 'hindi' 
@@ -203,103 +229,99 @@ useEffect(() => {
   //   setLanguage((prev) => (prev === 'hindi' ? 'english' : 'hindi'));
   // };
 
-  const handleMediaRecord = () => {
-    const mediaType = selectedTab === 1 
-      ? { video: true, audio: true }  // Video with audio
-      : { audio: true };              // Audio only
-  
-    if (!isRecording) {
-      // Clear previous recording data when starting new recording
-      setMediaURL("");
-      setCountdown(60); // Reset the countdown
-      if (selectedTab === 1) {
-        setVideoBlob(null);
-      } else {
-        setAudioBlob(null);
-      }
-  
-      console.log('Starting media recording for:', selectedTab === 1 ? 'video' : 'audio');
-  
-      navigator.mediaDevices.getUserMedia(mediaType)
-        .then((stream) => {
-          const mediaRecorder = new MediaRecorder(stream);
-          mediaRecorderRef.current = mediaRecorder;
-          mediaChunksRef.current = [];
-  
-          mediaRecorder.start();
-          setIsRecording(true);
-          console.log('MediaRecorder started');
-  
-          // Timer to stop recording after 60 seconds
-          const stopTimer = setTimeout(() => {
-            if (mediaRecorder.state === "recording") {
-              mediaRecorder.stop();
-              mediaRecorder.stream.getTracks().forEach(track => track.stop());
-              console.log('Recording stopped by timer');
-            }
-          }, 60000);
-  
-          const countdownInterval = setInterval(() => {
-            setCountdown((prev) => {
-              if (prev <= 1) {
-                clearInterval(countdownInterval);
-                return 0;
-              }
-              return prev - 1;
-            });
-          }, 1000);
-  
-          mediaRecorder.stopTimer = stopTimer;
-          mediaRecorder.countdownInterval = countdownInterval;
-  
-          mediaRecorder.addEventListener('dataavailable', (event) => {
-            if (event.data.size > 0) {
-              mediaChunksRef.current.push(event.data);
-              console.log('Data chunk received:', event.data.size, 'bytes');
-            }
-          });
-  
-          mediaRecorder.addEventListener('stop', () => {
-            const mediaBlob = new Blob(mediaChunksRef.current, {
-              type: selectedTab === 1 ? 'video/webm' : 'audio/webm'
-            });
-            console.log('Created media blob:', {
-              type: mediaBlob.type,
-              size: mediaBlob.size
-            });
-  
-            const url = URL.createObjectURL(mediaBlob);
-            setMediaURL(url);
-  
-            if (selectedTab === 1) {
-              setVideoBlob(mediaBlob);
-              console.log('Video blob set:', mediaBlob);
-            } else {
-              setAudioBlob(mediaBlob);
-              console.log('Audio blob set:', mediaBlob);
-            }
-  
-            setIsRecording(false);
-            mediaChunksRef.current = [];
-            clearTimeout(mediaRecorder.stopTimer);
-            clearInterval(mediaRecorder.countdownInterval);
-          });
-        })
-        .catch((err) => {
-          console.error('Error accessing media:', err);
-          setIsRecording(false);
-          alert(`Could not access your ${selectedTab === 1 ? 'camera' : 'microphone'}. Please check your browser settings.`);
-        });
+ const handleMediaRecord = () => {
+  const mediaType = selectedTab === 1 
+    ? { video: true, audio: true }  // Video with audio
+    : { audio: true };              // Audio only
+
+  if (!isRecording) {
+    // Clear previous recording data when starting new recording
+    setMediaURL("");
+    setCountdown(60); // Reset the countdown
+    if (selectedTab === 1) {
+      setVideoBlob(null);
     } else {
-      if (mediaRecorderRef.current) {
-        mediaRecorderRef.current.stop();
-        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-        clearTimeout(mediaRecorderRef.current.stopTimer);
-        clearInterval(mediaRecorderRef.current.countdownInterval);
-        console.log('Recording stopped manually');
-      }
+      setAudioBlob(null);
     }
-  };  
+
+    console.log('Starting media recording for:', selectedTab === 1 ? 'video' : 'audio');
+
+    navigator.mediaDevices.getUserMedia(mediaType)
+      .then((stream) => {
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+        mediaChunksRef.current = [];
+
+        mediaRecorder.start();
+        setIsRecording(true);
+        console.log('MediaRecorder started');
+
+        const countdownInterval = setInterval(() => {
+          setCountdown((prev) => {
+            if (prev <= 1) {
+              clearInterval(countdownInterval);
+              // Automatically stop recording when countdown reaches 0
+              if (mediaRecorder.state === "recording") {
+                console.log('Stopping recording due to countdown');
+                mediaRecorder.stop();
+                stream.getTracks().forEach(track => track.stop());
+                setIsRecording(false);
+              }
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+
+        mediaRecorder.countdownInterval = countdownInterval;
+
+        mediaRecorder.addEventListener('dataavailable', (event) => {
+          if (event.data.size > 0) {
+            mediaChunksRef.current.push(event.data);
+            console.log('Data chunk received:', event.data.size, 'bytes');
+          }
+        });
+
+        mediaRecorder.addEventListener('stop', () => {
+          const mediaBlob = new Blob(mediaChunksRef.current, {
+            type: selectedTab === 1 ? 'video/webm' : 'audio/webm'
+          });
+          console.log('Created media blob:', {
+            type: mediaBlob.type,
+            size: mediaBlob.size
+          });
+
+          const url = URL.createObjectURL(mediaBlob);
+          setMediaURL(url);
+
+          if (selectedTab === 1) {
+            setVideoBlob(mediaBlob);
+            console.log('Video blob set:', mediaBlob);
+          } else {
+            setAudioBlob(mediaBlob);
+            console.log('Audio blob set:', mediaBlob);
+          }
+
+          setIsRecording(false);
+          mediaChunksRef.current = [];
+          clearInterval(mediaRecorder.countdownInterval);
+        });
+      })
+      .catch((err) => {
+        console.error('Error accessing media:', err);
+        setIsRecording(false);
+        alert(`Could not access your ${selectedTab === 1 ? 'camera' : 'microphone'}. Please check your browser settings.`);
+      });
+  } else {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      clearInterval(mediaRecorderRef.current.countdownInterval);
+      setCountdown(0);
+      console.log('Recording stopped manually');
+    }
+  }
+}; 
 
   const handleReRecord = () => {
     // Clear the current recording
@@ -1079,3 +1101,4 @@ return (
 );
 }
 export default FileUploadForm;
+
