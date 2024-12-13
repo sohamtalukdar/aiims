@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 from retinaface import RetinaFace
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+
 # Step 1: Extract Frames from Video
 def extract_frames_with_frameshift(video_path, output_folder, fps_target):
     cap = cv2.VideoCapture(video_path)
@@ -92,7 +92,7 @@ def extract_features_with_cae(cae_model, faces_base, features_output_base):
 
                 img = cv2.imread(face_path)
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                (img, (96, 96))  # Resize to match CAE input size
+                img = cv2.resize(img, (96, 96))  # Resize to match CAE input size
                 img = img.astype(np.float32) / 255.0  # Normalize to [0, 1]
                 img_tensor = torch.from_numpy(img).permute(2, 0, 1).unsqueeze(0)  # Convert to tensor, shape (1, 3, 96, 96)
 
@@ -138,31 +138,41 @@ def load_features_and_predict(classifier_model, features_folder):
     return predictions, probabilities
 
 # Step 7: Save the predictions and class probabilities
-def save_predictions_with_classes(predictions, probabilities, output_folder):
+def save_predictions_with_classes(predictions, probabilities, output_folder, class_mapping):
     os.makedirs(output_folder, exist_ok=True)
     for i, (prediction, probability) in enumerate(zip(predictions, probabilities)):
+        label = class_mapping[prediction.item()]
         prediction_path = os.path.join(output_folder, f"sequence_{i}_prediction.npy")
         np.save(prediction_path, {
-            'predicted_class': prediction.cpu().numpy(),
+            'predicted_label': label,
             'probabilities': probability.cpu().numpy()
         })
     print(f"Predictions with class labels saved in {output_folder}")
 
-# Example Usage
-video_path = '/home/jetson/aiims/my-app/data/PT061224073714/video_1733467206460.webm'
-processed_folder_path = '/home/jetson/aiims/my-app/data/PT061224073714/processed_folder'  # Folder where processed videos are stored
-output_folder_base = '/home/jetson/aiims/my-app/data/PT061224073714/frames'  # Folder for extracted frames
-faces_output_base = '/home/jetson/aiims/my-app/data/PT061224073714/faces_detected'  # Folder for detected faces
-features_output_base = '/home/jetson/aiims/my-app/data/PT061224073714/features_extracted'  # Folder for extracted features
-output_folder = '/home/jetson/aiims/my-app/data/PT061224073714/classifier_predictions'  # Folder to save the predictions
-weights_path = '/home/jetson/aiims/my-app/aiims_picture_reading_25-oct-24_model1_model.pth'  # Path to saved Classifier weights
 
-# Define the class-to-number mapping
+# Example Usage
+video_path = '/home/soham/aiims/my-app/data/PT061224073714/video_1733467206460.webm'
+processed_folder_path = './path_to_processed_folder'  # Folder where processed videos are stored
+output_folder_base = './output_folder_for_frames'  # Folder for extracted frames
+faces_output_base = './faces_detected'  # Folder for detected faces
+features_output_base = './features_extracted'  # Folder for extracted features
+output_folder = './classifier_predictions'  # Folder to save the predictions
+weights_path = '/home/soham/aiims/my-app/aiims_picture_reading_25-oct-24_model1_model.pth'
+
 class_mapping = {
-    'Dementia': 0,
-    'MCI': 1,
-    'Normal': 2
+    0: 'Dementia',
+    1: 'MCI',
+    2: 'Normal'
 }
+
+# Example Usage
+video_path = '/home/soham/aiims/my-app/data/PT061224073714/video_1733467206460.webm'
+processed_folder_path = './path_to_processed_folder'
+output_folder_base = './output_folder_for_frames'
+faces_output_base = './faces_detected'
+features_output_base = './features_extracted'
+output_folder = './classifier_predictions'
+weights_path = '/home/soham/aiims/my-app/aiims_picture_reading_25-oct-24_model1_model.pth'
 
 # Step 1: Extract frames
 extract_frames_with_frameshift(video_path, output_folder_base, fps_target=10)
@@ -172,13 +182,12 @@ detect_faces_in_frames_with_structure(output_folder_base, faces_output_base)
 
 # Step 3: Load the CAE model and extract features
 cae_model = CAE()
-# Load pre-trained CAE weights if available
-# cae_model.load_state_dict(torch.load('path_to_cae_weights.pth'))
+dummy_input = torch.randn(1, 3, 96, 96)  # Match CAE input size
+dummy_encoded, _ = cae_model(dummy_input)
+input_size = dummy_encoded.numel()  # Dynamically calculate input size
 extract_features_with_cae(cae_model, faces_output_base, features_output_base)
 
 # Step 4: Load the trained Classifier model
-# Assuming the input size is known based on the CAE output
-input_size = 256 * 12 * 12  # Example input size, adjust based on your actual CAE output
 classifier_model = Classifier(input_size, num_classes=3)
 classifier_model.load_state_dict(torch.load(weights_path))
 classifier_model.eval()
@@ -186,6 +195,15 @@ classifier_model.eval()
 # Step 5: Make predictions using the trained classifier model
 predictions, probabilities = load_features_and_predict(classifier_model, features_output_base)
 
+# Convert predictions to labels
+predicted_labels = [class_mapping[p.item()] for p in predictions]
+
+# Print the final output in terms of labels
+print("Final Predictions in Labels:")
+for i, label in enumerate(predicted_labels):
+    print(f"The patient is diagnoed as: {label}")
+
 # Step 6: Save the predictions
-save_predictions_with_classes(predictions, probabilities, output_folder)
-h
+save_predictions_with_classes(predictions, probabilities, output_folder, class_mapping)
+
+
