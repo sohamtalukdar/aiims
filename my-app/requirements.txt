@@ -1,2 +1,9 @@
-torch @ https://download.pytorch.org/whl/cu121_full/torch-2.5.0%2Bcu121-cp310-cp310-linux_x86_64.whl
+tensorflow==2.18.0
+opencv-python
 retina-face
+pydub
+pyannote.audio
+## cuda==12.6 update 3
+## cudnn==9.6.0
+## env -> tf_env(conda)
+## python -> 3.9.21
