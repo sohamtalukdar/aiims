@@ -146,10 +146,10 @@ app.post('/save', (req, res) => {
         throw new Error('Patient ID, name, and age are required.');
       }
 
-      if (!req.files || ((!req.files.audio || req.files.audio.length === 0) && 
-          (!req.files.video || req.files.video.length === 0))) {
-        throw new Error('No audio or video files were uploaded.');
-      }
+      // if (!req.files || ((!req.files.audio || req.files.audio.length === 0) && 
+      //     (!req.files.video || req.files.video.length === 0))) {
+      //   throw new Error('No audio or video files were uploaded.');
+      // }
 
       const { audioPath, videoPath } = await storeFilesLocallyAndSaveMetadata(req.files, patientId, name, age);
 
@@ -199,7 +199,3 @@ app.listen(port, () => {
   console.log(`Data directory: ${baseDataDir}`);
   console.log(`Temporary uploads directory: ${tempDir}`);
 });
-
-
-
-

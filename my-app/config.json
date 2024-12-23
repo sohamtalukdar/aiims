@@ -1,0 +1,8 @@
+{
+    "access_token": "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",
+    "audio_model": "./aiims_acoustic_24-oct-24_model1_model.keras",
+    "video_model": "./aiims_picture_reading_25-oct-24_model1_model.pth",
+    "class_labels_path": "./labels.json",
+    "scalers_path": "./scalers.json",
+    "parent_folder": "/home/soham/aiims/my-app/data"
+}

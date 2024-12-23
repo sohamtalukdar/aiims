@@ -3,7 +3,7 @@ opencv-python
 retina-face
 pydub
 pyannote.audio
-## cuda==12.6 update 3
+## cuda==12.6 update 3 (nvcc --version)
 ## cudnn==9.6.0
-## env -> tf_env(conda)
-## python -> 3.9.21
+## env -> tf_env(conda)-> python -> 3.9.21
+
