@@ -176,7 +176,8 @@ def main():
     try:
         # Dynamically get the latest video file
         video_path = get_latest_video_file(parent_folder)
-        patient_id = os.path.basename(os.path.dirname(video_path))  # Extract patient ID from folder name
+        patient_id = os.path.basename(os.path.dirname(video_path))
+        save_video_result_to_db(patient_id, most_common_label)
         frames = extract_frames(video_path, fps_target=10)
         faces = detect_faces(frames)
         features = extract_features(cae_model, faces)
@@ -190,6 +191,7 @@ def main():
         save_video_result_to_db(patient_id, most_common_label)
     except Exception as e:
         print(f"Error: {e}")
+        save_video_result_to_db(patient_id, None)
 
 if __name__ == "__main__":
     main()

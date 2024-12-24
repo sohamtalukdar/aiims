@@ -182,7 +182,8 @@ def main():
     try:
         # Dynamically get the latest audio file
         audio_file = get_latest_audio_file(parent_folder)
-        patient_id = os.path.basename(os.path.dirname(audio_file))  # Extract patient ID from folder name
+        patient_id = os.path.basename(os.path.dirname(audio_file))
+        save_audio_result_to_db(patient_id, predicted_class)
         predicted_class = process_file(audio_file, model_path, class_labels_path, scalers_path)
         print(f"Predicted Class: {predicted_class}")
 
@@ -190,6 +191,7 @@ def main():
         save_audio_result_to_db(patient_id, predicted_class)
     except Exception as e:
         print(f"Error: {e}")
+        save_audio_result_to_db(patient_id, predicted_class)
 
 if __name__ == "__main__":
     main()
