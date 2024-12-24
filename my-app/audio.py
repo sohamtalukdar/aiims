@@ -39,8 +39,28 @@ class Attention(Layer):
         output = tf.reduce_sum(x * a, axis=1)
         return output
 
+
+def get_patient_details(patient_id):
+    db = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="Bharat@1947",
+        database="aiims"
+    )
+    cursor = db.cursor(dictionary=True)
+    query = "SELECT name, age FROM patient_media WHERE patientId = %s"
+    cursor.execute(query, (patient_id,))
+    result = cursor.fetchone()
+    cursor.close()
+    db.close()
+    if result:
+        return result["name"], result["age"]
+    else:
+        raise ValueError(f"No patient found with patientId: {patient_id}")
+
 # Helper function to save audio results to database
 def save_audio_result_to_db(patient_id, audio_result):
+    name, age = get_patient_details(patient_id)
     db = mysql.connector.connect(
         host="localhost",
         user="root",
@@ -49,16 +69,17 @@ def save_audio_result_to_db(patient_id, audio_result):
     )
     cursor = db.cursor()
     query = """
-        INSERT INTO model_inference (patientId, audioResult)
-        VALUES (%s, %s)
+        INSERT INTO model_inference (patientId, name, age, audioResult)
+        VALUES (%s, %s, %s, %s)
         ON DUPLICATE KEY UPDATE
-            audioResult = COALESCE(VALUES(audioResult), audioResult);
+            audioResult = COALESCE(VALUES(audioResult), audioResult),
+            name = COALESCE(VALUES(name), name),
+            age = COALESCE(VALUES(age), age);
     """
-    cursor.execute(query, (patient_id, audio_result))
+    cursor.execute(query, (patient_id, name, age, audio_result))
     db.commit()
     cursor.close()
     db.close()
-
 
 # Helper function to find the latest audio file
 def get_latest_audio_file(parent_folder):
@@ -180,18 +201,16 @@ parent_folder = config["parent_folder"]
 
 def main():
     try:
-        # Dynamically get the latest audio file
         audio_file = get_latest_audio_file(parent_folder)
-        patient_id = os.path.basename(os.path.dirname(audio_file))
-        save_audio_result_to_db(patient_id, predicted_class)
+        patient_id = os.path.basename(os.path.dirname(audio_file))  # Extract patient ID
         predicted_class = process_file(audio_file, model_path, class_labels_path, scalers_path)
         print(f"Predicted Class: {predicted_class}")
 
-        # Save result to database
         save_audio_result_to_db(patient_id, predicted_class)
     except Exception as e:
         print(f"Error: {e}")
-        save_audio_result_to_db(patient_id, predicted_class)
+        save_audio_result_to_db(patient_id, None)  # Save with null result
+
 
 if __name__ == "__main__":
     main()

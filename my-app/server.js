@@ -185,9 +185,9 @@ app.get('/test-db', async (req, res) => {
 });
 
 app.get('/download-schema', (req, res) => {
-  const filePath = path.join(__dirname, 'model_inference.pdf');
+  const filePath = path.join(__dirname, 'model_inference.xlsx');
   if (fs.existsSync(filePath)) {
-    res.download(filePath, 'model_inference.pdf', (err) => {
+    res.download(filePath, 'model_inference.xlsx', (err) => {
       if (err) {
         console.error('Error sending file:', err);
         res.status(500).send('Error downloading file');

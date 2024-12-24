@@ -1,6 +1,5 @@
 import pymysql
-from fpdf import FPDF
-import os
+import pandas as pd
 
 # Database connection
 def fetch_model_inference():
@@ -11,48 +10,32 @@ def fetch_model_inference():
         database='aiims'
     )
     cursor = connection.cursor()
-    cursor.execute("SELECT * FROM model_inference;")
+    cursor.execute("SELECT * FROM model_inference;")  # Fetch all columns
     rows = cursor.fetchall()
+    # Fetch column names for the DataFrame
+    column_names = [desc[0] for desc in cursor.description]
     cursor.close()
     connection.close()
-    return rows
+    return rows, column_names
 
-# Create PDF function
-def create_pdf(data):
-    pdf = FPDF()
-    pdf.set_auto_page_break(auto=True, margin=15)
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
+# Create Excel function
+def create_excel(data, columns):
+    # Create a pandas DataFrame
+    df = pd.DataFrame(data, columns=columns)
 
-    # Add table header
-    pdf.cell(10, 10, "ID", 1)
-    pdf.cell(40, 10, "Patient ID", 1)
-    pdf.cell(40, 10, "Audio Result", 1)
-    pdf.cell(40, 10, "Video Result", 1)
-    pdf.cell(50, 10, "Timestamp", 1)
-    pdf.ln()
+    # Save the DataFrame to an Excel file
+    excel_file = "model_inference.xlsx"
+    df.to_excel(excel_file, index=False)
 
-    # Add rows
-    for row in data:
-        pdf.cell(10, 10, str(row[0]), 1)
-        pdf.cell(40, 10, row[1], 1)
-        pdf.cell(40, 10, str(row[2]) if row[2] else "NULL", 1)
-        pdf.cell(40, 10, str(row[3]) if row[3] else "NULL", 1)
-        pdf.cell(50, 10, str(row[4]), 1)
-        pdf.ln()
+    print(f"Excel file saved as {excel_file}")
 
-    # Save the PDF locally
-    pdf_file = "model_inference.pdf"
-    pdf.output(pdf_file)
-    print(f"PDF saved as {pdf_file}")
-
-# Main function to monitor updates and regenerate PDF
+# Main function to monitor updates and regenerate Excel file
 def main():
     existing_data = None
     while True:
-        data = fetch_model_inference()
+        data, columns = fetch_model_inference()
         if data != existing_data:  # Check if there are new entries
-            create_pdf(data)
+            create_excel(data, columns)
             existing_data = data
 
 if __name__ == "__main__":

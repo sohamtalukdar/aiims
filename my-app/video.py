@@ -13,8 +13,28 @@ import os
 with open("config.json", 'r') as f:
     config = json.load(f)
 
+
+def get_patient_details(patient_id):
+    db = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="Bharat@1947",
+        database="aiims"
+    )
+    cursor = db.cursor(dictionary=True)
+    query = "SELECT name, age FROM patient_media WHERE patientId = %s"
+    cursor.execute(query, (patient_id,))
+    result = cursor.fetchone()
+    cursor.close()
+    db.close()
+    if result:
+        return result["name"], result["age"]
+    else:
+        raise ValueError(f"No patient found with patientId: {patient_id}")
+
 # Database connection helper
 def save_video_result_to_db(patient_id, video_result):
+    name, age = get_patient_details(patient_id)
     db = mysql.connector.connect(
         host="localhost",
         user="root",
@@ -23,12 +43,14 @@ def save_video_result_to_db(patient_id, video_result):
     )
     cursor = db.cursor()
     query = """
-        INSERT INTO model_inference (patientId, videoResult)
-        VALUES (%s, %s)
+        INSERT INTO model_inference (patientId, name, age, videoResult)
+        VALUES (%s, %s, %s, %s)
         ON DUPLICATE KEY UPDATE
-            videoResult = COALESCE(VALUES(videoResult), videoResult);
+            videoResult = COALESCE(VALUES(videoResult), videoResult),
+            name = COALESCE(VALUES(name), name),
+            age = COALESCE(VALUES(age), age);
     """
-    cursor.execute(query, (patient_id, video_result))
+    cursor.execute(query, (patient_id, name, age, video_result))
     db.commit()
     cursor.close()
     db.close()
@@ -174,24 +196,21 @@ classifier_model.load_state_dict(torch.load(model_path))
 
 def main():
     try:
-        # Dynamically get the latest video file
         video_path = get_latest_video_file(parent_folder)
-        patient_id = os.path.basename(os.path.dirname(video_path))
-        save_video_result_to_db(patient_id, most_common_label)
+        patient_id = os.path.basename(os.path.dirname(video_path))  # Extract patient ID
         frames = extract_frames(video_path, fps_target=10)
         faces = detect_faces(frames)
         features = extract_features(cae_model, faces)
         predictions, probabilities = classify_features(classifier_model, features)
 
-        # Get Most Common Prediction
         most_common_label = get_most_common_prediction(predictions, class_mapping)
         print(f"Most Common Predicted Class: {most_common_label}")
 
-        # Save result to database
         save_video_result_to_db(patient_id, most_common_label)
     except Exception as e:
         print(f"Error: {e}")
-        save_video_result_to_db(patient_id, None)
+        save_video_result_to_db(patient_id, None)  # Save with null result
+
 
 if __name__ == "__main__":
     main()

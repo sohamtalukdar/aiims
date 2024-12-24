@@ -153,7 +153,7 @@ function NameAgeForm() {
     try {
       const response = await fetch('http://localhost:5001/download-schema');
       if (!response.ok) {
-        throw new Error('Error downloading PDF');
+        throw new Error('Error downloading xlsx');
       }
 
       // Convert the response to a Blob
@@ -165,7 +165,7 @@ function NameAgeForm() {
       // Create a link to download the PDF
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'model_inference.pdf'; // Name the file as you like
+      link.download = 'model_inference.xlsx'; // Name the file as you like
       document.body.appendChild(link);
       link.click();
 
