@@ -184,6 +184,20 @@ app.get('/test-db', async (req, res) => {
   }
 });
 
+app.get('/download-schema', (req, res) => {
+  const filePath = path.join(__dirname, 'model_inference.pdf');
+  if (fs.existsSync(filePath)) {
+    res.download(filePath, 'model_inference.pdf', (err) => {
+      if (err) {
+        console.error('Error sending file:', err);
+        res.status(500).send('Error downloading file');
+      }
+    });
+  } else {
+    res.status(404).send('Schema file not found');
+  }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);

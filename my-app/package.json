@@ -39,7 +39,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "start": "concurrently \"npm run client\" \"npm run server\" \"python monitor.py\""
+    "start": "concurrently \"npm run client\" \"npm run server\" \"python monitor.py\"  \"python pdf_gen.py\""
   },
   "eslintConfig": {
     "extends": [
