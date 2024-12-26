@@ -75,7 +75,7 @@ const upload = multer({
 ]);
 
 // Function: Move files from temp to permanent storage and store metadata in MySQL
-const storeFilesLocallyAndSaveMetadata = async (files, patientId, name, age) => {
+const storeFilesLocallyAndSaveMetadata = async (files, patientId, name, age, score) => {
   files = files || {};
   
   const patientDir = path.join(baseDataDir, patientId);
@@ -100,34 +100,81 @@ const storeFilesLocallyAndSaveMetadata = async (files, patientId, name, age) => 
     fs.renameSync(oldPath, videoPath);
   }
 
-  // Check if an entry already exists for this patient
-  const [existingRows] = await pool.execute(
-    'SELECT id, audioPath, videoPath FROM patient_media WHERE patientId = ? ORDER BY id DESC LIMIT 1',
-    [patientId]
-  );
+  // Start a transaction
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
 
-  if (existingRows.length > 0) {
-    // Update existing record
-    const existing = existingRows[0];
-    const updatedAudioPath = audioPath || existing.audioPath;
-    const updatedVideoPath = videoPath || existing.videoPath;
-
-    await pool.execute(
-      'UPDATE patient_media SET audioPath = ?, videoPath = ? WHERE id = ?',
-      [updatedAudioPath, updatedVideoPath, existing.id]
+    // First, handle patient_media table
+    const [existingRows] = await connection.execute(
+      'SELECT id, audioPath, videoPath FROM patient_media WHERE patientId = ? ORDER BY id DESC LIMIT 1',
+      [patientId]
     );
 
-    return { audioPath: updatedAudioPath, videoPath: updatedVideoPath };
-  } else {
-    // Insert new record
-    const timestamp = new Date();
-    const insertQuery = `
-      INSERT INTO patient_media (patientId, name, age, audioPath, videoPath, timestamp)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `;
-    await pool.execute(insertQuery, [patientId, name, age, audioPath, videoPath, timestamp]);
-    
+    if (existingRows.length > 0) {
+      // Update existing record in patient_media
+      const existing = existingRows[0];
+      const updatedAudioPath = audioPath || existing.audioPath;
+      const updatedVideoPath = videoPath || existing.videoPath;
+
+      await connection.execute(
+        'UPDATE patient_media SET audioPath = ?, videoPath = ?, score = ? WHERE id = ?',
+        [updatedAudioPath, updatedVideoPath, score, existing.id]
+      );
+    } else {
+      // Insert new record in patient_media
+      const timestamp = new Date();
+      await connection.execute(
+        `INSERT INTO patient_media (patientId, name, age, audioPath, videoPath, score, timestamp)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [patientId, name, age, audioPath, videoPath, score, timestamp]
+      );
+    }
+
+    // Now handle model_inference table
+    // Get the latest score from patient_media for this patient
+    const [latestScore] = await connection.execute(
+      'SELECT score FROM patient_media WHERE patientId = ? ORDER BY id DESC LIMIT 1',
+      [patientId]
+    );
+
+    let mmseScore = null;
+    if (latestScore.length > 0 && latestScore[0].score !== null) {
+      mmseScore = latestScore[0].score;
+    }
+
+    // Check if entry exists in model_inference
+    const [existingInference] = await connection.execute(
+      'SELECT id FROM model_inference WHERE patientId = ?',
+      [patientId]
+    );
+
+    if (existingInference.length > 0) {
+      // Update existing record with score
+      await connection.execute(
+        'UPDATE model_inference SET name = ?, age = ?, mmseScore = ? WHERE patientId = ?',
+        [name, age, mmseScore, patientId]
+      );
+    } else {
+      // Insert new record with score
+      await connection.execute(
+        `INSERT INTO model_inference (patientId, name, age, mmseScore)
+         VALUES (?, ?, ?, ?)`,
+        [patientId, name, age, mmseScore]
+      );
+    }
+
+    // Commit the transaction
+    await connection.commit();
+
     return { audioPath, videoPath };
+  } catch (error) {
+    // If anything goes wrong, roll back changes
+    await connection.rollback();
+    throw error;
+  } finally {
+    // Release the connection
+    connection.release();
   }
 };
 
@@ -140,29 +187,43 @@ app.post('/save', (req, res) => {
     }
 
     try {
-      const { name, age, patientId } = req.body;
-      
+      const { name, age, patientId, score } = req.body;
+      console.log('Received data:', { name, age, patientId, score });
+
       if (!patientId || !name || !age) {
         throw new Error('Patient ID, name, and age are required.');
       }
 
-      // if (!req.files || ((!req.files.audio || req.files.audio.length === 0) && 
-      //     (!req.files.video || req.files.video.length === 0))) {
-      //   throw new Error('No audio or video files were uploaded.');
-      // }
+      // Handle score - default to 0 if not provided or invalid
+      let parsedScore = 0;
+      if (score !== undefined && score !== null) {
+        parsedScore = parseInt(score, 10);
+        if (isNaN(parsedScore)) {
+          console.warn('Invalid score value received:', score);
+          parsedScore = 0;
+        }
+      }
+      console.log('Using score:', parsedScore);
 
-      const { audioPath, videoPath } = await storeFilesLocallyAndSaveMetadata(req.files, patientId, name, age);
+      const { audioPath, videoPath } = await storeFilesLocallyAndSaveMetadata(
+        req.files,
+        patientId,
+        name,
+        age,
+        parsedScore
+      );
 
       res.status(201).json({
         message: 'Files uploaded and stored successfully',
         patientId,
         audioPath,
-        videoPath
+        videoPath,
+        score: parsedScore,
       });
     } catch (error) {
       console.error('Server error:', error);
       if (req.files) {
-        Object.values(req.files).flat().forEach(file => {
+        Object.values(req.files).flat().forEach((file) => {
           if (fs.existsSync(file.path)) {
             fs.unlinkSync(file.path);
           }
@@ -172,6 +233,7 @@ app.post('/save', (req, res) => {
     }
   });
 });
+
 
 // Test Database Connectivity Endpoint
 app.get('/test-db', async (req, res) => {
