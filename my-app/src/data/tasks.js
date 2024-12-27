@@ -105,13 +105,13 @@ const tasks = [
           ],
           answer: null, // User's selected answer
         },
-        {
-          question: { hindi: 'रोगी से निम्नलिखित निर्देश पढ़ने और उसका पालन करने के लिए कहें:', english: 'Ask the patient to read the following instruction and follow it:' },
-          choices: [
-            { hindi: 'निर्देश का पालन किया गया', english: 'Instruction followed' }
-          ],
-          answer: null, // User's selected answer
-        },
+        // {
+        //   question: { hindi: 'रोगी से निम्नलिखित निर्देश पढ़ने और उसका पालन करने के लिए कहें:', english: 'Ask the patient to read the following instruction and follow it:' },
+        //   choices: [
+        //     { hindi: 'निर्देश का पालन किया गया', english: 'Instruction followed' }
+        //   ],
+        //   answer: null, // User's selected answer
+        // },
         {
           question: { hindi: 'रोगी से कुछ भी एक वाक्य बनाकर लिखने के लिए कहें, जिसमें एक संज्ञा और एक क्रिया हो, कागज़ पर:', english: 'Ask the patient to make up and write a sentence about anything, which contains a noun and a verb on the blank paper:' },
           choices: [
