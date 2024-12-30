@@ -121,6 +121,7 @@ const tasks = [
         },
         {
           question: { hindi: 'रोगी से इस चित्र को कागज़ पर कॉपी करने के लिए कहें:', english: 'Ask the patient to copy this picture on the blank paper:' },
+          image: '/pentagon.png',
           choices: [
             { hindi: 'चित्र स्वीकार्य', english: 'Picture acceptable' } // Leave blank if image will be shown instead of choices
           ],

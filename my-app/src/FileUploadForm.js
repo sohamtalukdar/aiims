@@ -660,33 +660,38 @@ const InitialInstructions = ({ onAccept, onDeny, setIsPatient, language }) => {
             {task.questions[currentQuestionIndex].question[language]}
           </h3>
 
-          {/* Render the current question and choices */}
-          {currentQuestionIndex === 11 ? (
-            // Special rendering for question at index 11 (if needed)
+          {currentQuestionIndex === 10 ? (
             <div style={{ textAlign: 'center', marginTop: '10px' }}>
-              <img src="/pentagon.png" alt="Shape for copying" style={{ maxWidth: '45%', height: 'auto' }} />
+              <img 
+                src={process.env.PUBLIC_URL + '/pentagon.png'} 
+                alt="Shape for copying" 
+                style={{ maxWidth: '45%', height: 'auto' }}
+                onError={(e) => {
+                  console.error("Image failed to load");
+                  console.log("Attempted path:", e.target.src);
+                }}
+              />
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '10px' }}>
-              {task.questions[currentQuestionIndex].choices.map((choice, index) => (
-                <label
-                  key={index}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    textAlign: 'center',
-                    margin: '5px 0',
-                    width: '200px',
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={currentSelections.includes(index)}
-                    onChange={() => handleAnswerSelect(index)}
-                    style={{ marginRight: '10px' }}
-                  />
-                  {choice[language]}
-                </label>
-              ))}
-
+                {task.questions[currentQuestionIndex].choices.map((choice, index) => (
+                  <label
+                    key={index}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      textAlign: 'center',
+                      margin: '5px 0',
+                      width: '200px',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={currentSelections.includes(index)}
+                      onChange={() => handleAnswerSelect(index)}
+                      style={{ marginRight: '10px' }}
+                    />
+                    {choice[language]}
+                  </label>
+                ))}
               </div>
             </div>
           ) : (
