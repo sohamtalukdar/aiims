@@ -116,12 +116,12 @@
 
     const TaskCompletion = ({ language }) => {
       const audioRef = useRef(null);
-      
+    
       useEffect(() => {
         if (audioRef.current) {
           audioRef.current.play();
         }
-      }, [language]);
+      }, []);
     
       const calculateScore = () => {
         let totalScore = 0;
@@ -155,57 +155,56 @@
         <div className="flex flex-col items-center justify-center min-h-screen p-8 bg-white max-w-2xl mx-auto">
           <audio
             ref={audioRef}
-            src={language === 'english' ? '/audio/thankyou_en.mp3' : '/audio/thankyou_hi.mp3'}
+            src={language === 'english' ? '/audio/q16_en.mp3' : '/audio/q16_hi.mp3'}
           />
           <div className="text-center w-full">
             <h2 className="text-3xl font-bold mb-8 text-gray-800">
               {language === 'hindi' ? 'धन्यवाद!' : 'Thank You!'}
             </h2>
-          {/* Score Display */}
-              <div className="bg-blue-50 p-6 rounded-lg shadow-sm mb-8">
-                <h3 className="text-xl font-semibold mb-2">
-                  {language === 'hindi' ? 'आपका स्कोर' : 'Your Score'}
-                </h3>
-                <div className="text-4xl font-bold text-blue-600">
-                  {score} / {maxScore}
-                </div>
-              </div>
-                <div className="space-y-4">
-                  <p className="text-lg">
-                    {language === 'hindi' 
-                      ? 'आपका परीक्षण पूरा हो गया है। परिणाम आपके स्वास्थ्य देखभाल प्रदाता द्वारा साझा किए जाएंगे।'
-                      : 'Your test has been completed. The results will be shared by your healthcare provider.'}
-                  </p>
-                  <p className="text-base text-gray-600">
-                    {language === 'hindi'
-                      ? 'कृपया अपने स्वास्थ्य देखभाल प्रदाता से संपर्क करें।'
-                      : 'Please contact your healthcare provider for follow-up.'}
-                  </p>
-                  
-                  {/* Add Exit Button */}
-                  <button
-                    onClick={handleExit}
-                    style={{
-                      marginTop: '2rem',
-                      padding: '10px 20px',
-                      backgroundColor: '#007bff',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '1rem',
-                      transition: 'background-color 0.2s'
-                    }}
-                    onMouseOver={(e) => e.target.style.backgroundColor = '#0056b3'}
-                    onMouseOut={(e) => e.target.style.backgroundColor = '#007bff'}
-                  >
-                    {language === 'hindi' ? 'बाहर निकलें' : 'Exit'}
-                  </button>
-                </div>
+            <div className="bg-blue-50 p-6 rounded-lg shadow-sm mb-8">
+              <h3 className="text-xl font-semibold mb-2">
+                {language === 'hindi' ? 'आपका MMSE स्कोर' : 'Your MMSE Score'}
+              </h3>
+              <div className="text-4xl font-bold text-blue-600">
+                {score} / {maxScore}
               </div>
             </div>
-          );
-        };
+            <div className="space-y-4">
+              <p className="text-lg">
+                {language === 'hindi' 
+                  ? 'आपका परीक्षण पूरा हो गया है। परिणाम आपके स्वास्थ्य देखभाल प्रदाता द्वारा साझा किए जाएंगे।'
+                  : 'Your test has been completed. The results will be shared by your healthcare provider.'}
+              </p>
+              <p className="text-base text-gray-600">
+                {language === 'hindi'
+                  ? 'कृपया अपने स्वास्थ्य देखभाल प्रदाता से संपर्क करें।'
+                  : 'Please contact your healthcare provider for follow-up.'}
+              </p>
+              
+              <button
+                onClick={handleExit}
+                style={{
+                  marginTop: '2rem',
+                  padding: '10px 20px',
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseOver={(e) => e.target.style.backgroundColor = '#0056b3'}
+                onMouseOut={(e) => e.target.style.backgroundColor = '#007bff'}
+              >
+                {language === 'hindi' ? 'बाहर निकलें' : 'Exit'}
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
 
     const handleTabClick = (id) => {
       // Prevent navigation to completed tasks
@@ -470,39 +469,46 @@
     }
 };
 
-    // Instruction Modal Component
-    const InstructionModal = ({ onClose }) => {
+const InstructionModal = ({ onClose }) => {
   const audioRef = useRef(null);
-  
+
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.play();
     }
-  }, [language]);
+  }, []); // Removed language from dependency array
 
   return (
     <div className="custom-modal-overlay">
       <div className="custom-modal-content">
         <audio
           ref={audioRef}
-          src={selectedTab === 0 
-            ? (language === 'english' ? '/audio/task1_en.mp3' : '/audio/task1_hi.mp3')
-            : (language === 'english' ? '/audio/task2_en.mp3' : '/audio/task2_hi.mp3')
+          src={selectedTab === 0 ? 
+            (language === 'english' ? '/audio/q2_en.mp3' : '/audio/q2_hi.mp3') :
+            (language === 'english' ? '/audio/q3_en.mp3' : '/audio/q3_hi.mp3')
           }
         />
         <h2>{language === 'hindi' ? 'निर्देश' : 'Instructions'}</h2>
         <p style={{ marginTop: '10px', fontSize: '1.2em', color: '#555' }}>
           {selectedTab === 0 ? (
             language === 'hindi' ? (
-              <p>कृपया "आवाज़ रिकॉर्ड करें" पर क्लिक करें और जोर से पढ़ें। आपके पास 1 मिनट है। रिकॉर्डिंग स्वचालित रूप से रुक जाएगी। "जमा करें" पर क्लिक करें।</p>
+              <>
+                <p>कृपया "आवाज़ रिकॉर्ड करें" पर क्लिक करें और जोर से पढ़ें। आपके पास 1 मिनट है। रिकॉर्डिंग स्वचालित रूप से रुक जाएगी। "जमा करें" पर क्लिक करें।</p>
+              </>
             ) : (
-              <p>Please click "Record Voice" to start reading aloud. You have 1 minute. Recording will stop automatically. Click "Submit" to save.</p>
+              <>
+                <p>Please click "Record Voice" to start reading aloud. You have 1 minute. Recording will stop automatically. Click "Submit" to save.</p>
+              </>
             )
           ) : (
             language === 'hindi' ? (
-              <p>कृपया "वीडियो रिकॉर्ड करें" पर क्लिक करें और चित्र का वर्णन करें। आपके पास 1 मिनट है। रिकॉर्डिंग स्वचालित रूप से रुक जाएगी। "जमा करें" पर क्लिक करें। ज़ूम इन के लिए, कृपया चित्र पर क्लिक करें।</p>
+              <>
+                <p>कृपया "वीडियो रिकॉर्ड करें" पर क्लिक करें और चित्र का वर्णन करें। आपके पास 1 मिनट है। रिकॉर्डिंग स्वचालित रूप से रुक जाएगी। "जमा करें" पर क्लिक करें। ज़ूम इन के लिए, कृपया चित्र पर क्लिक करें।</p>
+              </>
             ) : (
-              <p>Please click "Record Video" and describe the picture. You have 1 minute. Recording will stop automatically. Click "Submit" to save. To zoom in, please click on the picture.</p>
+              <>
+                <p>Please click "Record Video" and describe the picture. You have 1 minute. Recording will stop automatically. Click "Submit" to save. To zoom in, please click on the picture.</p>
+              </>
             )
           )}
         </p>
@@ -512,84 +518,85 @@
   );
 };
 
-    // Initial Instructions Component for the third task
-    const InitialInstructions = ({ onAccept, onDeny, setIsPatient, language }) => {
-      const audioRef = useRef(null);
-      
-      useEffect(() => {
-        if (audioRef.current) {
-          audioRef.current.play();
-        }
-      }, [language]);
-    
-      return (
-        <div className="initial-instructions-overlay">
-          <div className="initial-instructions-content">
-            <audio
-              ref={audioRef}
-              src={language === 'english' ? '/audio/mmse_en.mp3' : '/audio/mmse_hi.mp3'}
-            />
-            <h2>{language === 'hindi' ? 'ऑनलाइन MMSE परीक्षण में आपका स्वागत है' : 'Welcome to the Online MMSE Test'}</h2>
-          <p>
-            {language === 'hindi' ? (
-              <>
-                <strong>ऑनलाइन MMSE टेस्ट: तैयारी और निर्देश</strong><br/>
-                <br/>
-                स्वागत है! टेस्ट शुरू करने से पहले कृपया निम्नलिखित सुनिश्चित करें:
-                <ul>
-                  <li>एक देखभालकर्ता (Caregiver) की उपस्थिति आवश्यक है, जो टेस्ट ले सके।</li>
-                  <li>एक खाली कागज</li>
-                  <li>एक पेन या पेंसिल</li>
-                  <li>आवश्यक सहायक उपकरण (जैसे, श्रवण यंत्र, चश्मा, घड़ी)</li>
-                </ul>
-                <br/>
-                <strong>देखभालकर्ता के लिए निर्देश:</strong><br/>
-                <ul>
-                  <li>व्यक्ति को बैठाएँ: व्यक्ति को अपने सामने ऐसी जगह पर बैठाएँ जहाँ वे आपको स्पष्ट रूप से देख और सुन सकें।</li>
-                  <li>प्रश्न पढ़ें: प्रत्येक प्रश्न को व्यक्ति के लिए ज़ोर से पढ़ें।</li>
-                  <li>उत्तर चिह्नित करें: यदि व्यक्ति सही उत्तर देता है तो चेकबॉक्स पर निशान लगाएँ।</li>
-                  <li>अगले पर जाएं: हर प्रश्न के बाद "अगला" पर क्लिक करें।</li>
-                </ul>
-                <br/>
-                क्या आप शुरू करने के लिए तैयार हैं?
-              </>
-            ) : (
-              <>
-                <strong>Online MMSE Test: Preparation & Instructions</strong><br/>
-                <br/>
-                Welcome! Before starting the test, please ensure the following:
-                <ul>
-                  <li>A caregiver is present to administer the test.</li>
-                  <li>A blank paper</li>
-                  <li>A pen or pencil</li>
-                  <li>Any necessary aids (e.g., hearing aids, glasses, clock)</li>
-                </ul>
-                <br/>
-                <strong>Instructions for the Caregiver:</strong><br/>
-                <ul>
-                  <li>Seat the Patient: Position the patient across from you, where they can see and hear you clearly.</li>
-                  <li>Read Aloud: Read each question out loud to the patient.</li>
-                  <li>Mark Responses: Check the box if the patient answers correctly.</li>
-                  <li>Progress: Click "Next" after each question.</li>
-                </ul>
-                <br/>
-                Are you ready to begin?
-              </>
-            )}
-          </p>
-    
-          <p>{language === 'hindi' ? 'यदि आप "स्वीकार करें" पर क्लिक करते हैं, तो आप परीक्षण में भाग लेने के लिए सहमत हैं।' : 'By clicking "Accept," you agree to participate in the test.'}</p>
-          <div style={{ marginTop: '20px' }}>
-            <button className="accept-button" onClick={onAccept}>
-              {language === 'hindi' ? 'स्वीकार करें' : 'Accept'}
-            </button>
-            <button className="deny-button" onClick={onDeny} style={{ marginLeft: '10px' }}>
-              {language === 'hindi' ? 'अस्वीकार करें' : 'Deny'}
-            </button>
-          </div>
+const InitialInstructions = ({ onAccept, onDeny, setIsPatient, language }) => {
+  const audioRef = useRef(null);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.play();
+    }
+  }, []);
+
+  return (
+    <div className="initial-instructions-overlay">
+      <div className="initial-instructions-content">
+        <audio
+          ref={audioRef}
+          src={language === 'english' ? '/audio/q4_en.mp3' : '/audio/q4_hi.mp3'}
+        />
+        <h2>{language === 'hindi' ? 'ऑनलाइन MMSE परीक्षण में आपका स्वागत है' : 'Welcome to the Online MMSE Test'}</h2>
+        
+        <p>
+          {language === 'hindi' ? (
+            <>
+              <strong>ऑनलाइन MMSE टेस्ट: तैयारी और निर्देश</strong><br/>
+              <br/>
+              स्वागत है! टेस्ट शुरू करने से पहले कृपया निम्नलिखित सुनिश्चित करें:
+              <ul>
+                <li>एक देखभालकर्ता (Caregiver) की उपस्थिति आवश्यक है, जो टेस्ट ले सके।</li>
+                <li>एक खाली कागज</li>
+                <li>एक पेन या पेंसिल</li>
+                <li>आवश्यक सहायक उपकरण (जैसे, श्रवण यंत्र, चश्मा, घड़ी)</li>
+              </ul>
+              <br/>
+              <strong>देखभालकर्ता के लिए निर्देश:</strong><br/>
+              <ul>
+                <li>व्यक्ति को बैठाएँ: व्यक्ति को अपने सामने ऐसी जगह पर बैठाएँ जहाँ वे आपको स्पष्ट रूप से देख और सुन सकें।</li>
+                <li>प्रश्न पढ़ें: प्रत्येक प्रश्न को व्यक्ति के लिए ज़ोर से पढ़ें।</li>
+                <li>उत्तर चिह्नित करें: यदि व्यक्ति सही उत्तर देता है तो चेकबॉक्स पर निशान लगाएँ।</li>
+                <li>अगले पर जाएं: हर प्रश्न के बाद "अगला" पर क्लिक करें।</li>
+              </ul>
+              <br/>
+              क्या आप शुरू करने के लिए तैयार हैं?
+            </>
+          ) : (
+            <>
+              <strong>Online MMSE Test: Preparation & Instructions</strong><br/>
+              <br/>
+              Welcome! Before starting the test, please ensure the following:
+              <ul>
+                <li>A caregiver is present to administer the test.</li>
+                <li>A blank paper</li>
+                <li>A pen or pencil</li>
+                <li>Any necessary aids (e.g., hearing aids, glasses, clock)</li>
+              </ul>
+              <br/>
+              <strong>Instructions for the Caregiver:</strong><br/>
+              <ul>
+                <li>Seat the Patient: Position the patient across from you, where they can see and hear you clearly.</li>
+                <li>Read Aloud: Read each question out loud to the patient.</li>
+                <li>Mark Responses: Check the box if the patient answers correctly.</li>
+                <li>Progress: Click "Next" after each question.</li>
+              </ul>
+              <br/>
+              Are you ready to begin?
+            </>
+          )}
+        </p>
+
+        <p>{language === 'hindi' ? 'यदि आप "स्वीकार करें" पर क्लिक करते हैं, तो आप परीक्षण में भाग लेने के लिए सहमत हैं।' : 'By clicking "Accept," you agree to participate in the test.'}</p>
+        <div style={{ marginTop: '20px' }}>
+          <button className="accept-button" onClick={onAccept}>
+            {language === 'hindi' ? 'स्वीकार करें' : 'Accept'}
+          </button>
+          <button className="deny-button" onClick={onDeny} style={{ marginLeft: '10px' }}>
+            {language === 'hindi' ? 'अस्वीकार करें' : 'Deny'}
+          </button>
         </div>
       </div>
-    );
+    </div>
+  );
+};
 
     const MultipleChoiceTask = ({
       task,
@@ -936,7 +943,7 @@
           }}>
           <audio
             ref={audioRef}
-            src={language === 'english' ? '/audio/question_14_hi_merged.mp3' : '/audio/question_14_hi_merged.mp3'}
+            src={language === 'english' ? '/audio/q1_en.mp3' : '/audio/q1_hi.mp3'}
           />
           <div className="initial-popup-content"
             style={{ maxWidth: '600px', width: '90%', textAlign: 'center' }}>
