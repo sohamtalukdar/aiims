@@ -2,15 +2,15 @@
   import { useLocation, useNavigate } from 'react-router-dom'; 
   import tasks from './tasks';
   import './App.css';
-  import TaskCompletion from './TaskCompletion';
+  // import TaskCompletion from './TaskCompletion';
   import InstructionModal from './InstructionModal';
   import handleMediaRecord, { handleReRecord } from './handleMediaRecord';
   import useRefreshHandler from './useRefreshHandler';
-  import InitialInstructions from './InitialInstructions';
+  // import InitialInstructions from './InitialInstructions';
   import InitialPopup from './InitialPopup';
   import handleSubmit from './handleSubmit';
   import handleTabClick from './handleTabClick';
-  import MultipleChoiceTask from './MultipleChoiceTask';
+  // import MultipleChoiceTask from './MultipleChoiceTask';
   import TaskContent from './TaskContent';
 
 
@@ -20,7 +20,7 @@
     const navigate = useNavigate();
     const [showModal, setShowModal] = useState(true);
     const [selectedTab, setSelectedTab] = useState(0);
-    const [isPatient, setIsPatient] = useState(true); // Add this line with other useState declarations
+    const [setIsPatient] = useState(true); // Add this line with other useState declarations
     const [language, setLanguage] = useState('english');
     const [isRecording, setIsRecording] = useState(false);
     const [mediaURL, setMediaURL] = useState("");
