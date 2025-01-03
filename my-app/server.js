@@ -1,3 +1,4 @@
+const https = require('https');
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
@@ -8,6 +9,13 @@ const mysql = require('mysql2/promise');
 
 const app = express();
 const port = 5001;
+
+
+const httpsOptions = {
+  key: fs.readFileSync(process.env.SSL_KEY_FILE),
+  cert: fs.readFileSync(process.env.SSL_CRT_FILE),
+};
+
 
 // Enable CORS and JSON parsing
 app.use(cors());
@@ -260,6 +268,15 @@ app.get('/download-schema', (req, res) => {
   }
 });
 
+
+const buildPath = path.join(__dirname, 'build');
+app.use(express.static(buildPath));
+
+// Catch-all handler to serve the React app for unknown routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(buildPath, 'index.html'));
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
@@ -269,9 +286,9 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start Server
-app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+https.createServer(httpsOptions, app).listen(port, '0.0.0.0', () => {
+  console.log(`Server running on https://0.0.0.0:${port}`);
   console.log(`Data directory: ${baseDataDir}`);
   console.log(`Temporary uploads directory: ${tempDir}`);
 });
+

@@ -1,4 +1,5 @@
 {
+    "base_url": "http://172.20.10.4:5001",
     "access_token": "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",
     "audio_model": "./aiims_acoustic_24-oct-24_model1_model.keras",
     "video_model": "./aiims_picture_reading_25-oct-24_model1_model.pth",

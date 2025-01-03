@@ -1,5 +1,7 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
+import config from './config.json';
+
 
 const MultipleChoiceTask = ({
   task,
@@ -201,7 +203,7 @@ const MultipleChoiceTask = ({
 
             try {
               console.log('Sending MMSE score to server:', finalScore);
-              const response = await fetch('http://localhost:5001/save', {
+              const response = await fetch(`${config.base_url}/save`, {
                 method: 'POST',
                 body: formData,
               });

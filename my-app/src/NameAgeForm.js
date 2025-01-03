@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import config from './config.json';
 
 const styles = {
   gradientHeading: {
@@ -132,7 +133,7 @@ function NameAgeForm() {
     const generatedId = generatePatientId();
 
     try {
-      const response = await fetch('http://localhost:5001/save', {
+      const response = await fetch(`${config.base_url}/save`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -151,7 +152,7 @@ function NameAgeForm() {
 
   const handleDownload = async () => {
     try {
-      const response = await fetch('http://localhost:5001/download-schema');
+      const response = await fetch(`${config.base_url}/download-schema`);
       if (!response.ok) {
         throw new Error('Error downloading xlsx');
       }

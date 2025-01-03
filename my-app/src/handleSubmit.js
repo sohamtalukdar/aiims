@@ -1,4 +1,5 @@
 import { calculateScore } from './scoreUtils';
+import config from './config.json';
 
 const handleSubmit = async ({
   e,
@@ -74,7 +75,7 @@ const handleSubmit = async ({
     }
 
     console.log('Sending request to server...');
-    const response = await fetch('http://localhost:5001/save', {
+    const response = await fetch(`${config.base_url}/save`, {
       method: 'POST',
       body: formData,
     });
