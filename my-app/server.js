@@ -7,6 +7,10 @@ const fs = require('fs');
 require('dotenv').config();
 const mysql = require('mysql2/promise');
 
+const config = JSON.parse(fs.readFileSync('./config.json', 'utf-8'));
+const dbConfig = config.db_config;
+
+
 const app = express();
 const port = 5001;
 
@@ -20,14 +24,6 @@ const httpsOptions = {
 // Enable CORS and JSON parsing
 app.use(cors());
 app.use(express.json());
-
-// Configure MySQL connection pool
-const dbConfig = {
-  host: 'localhost',
-  user: 'root',
-  password: 'Bharat@1947',
-  database: 'aiims'
-};
 
 let pool;
 (async () => {

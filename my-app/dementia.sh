@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # Get the user's home directory
-export HOME=/home/soham
+export HOME=/home/soham ## change here
 
 # Initialize conda
-eval "$(/home/soham/anaconda3/bin/conda shell.bash hook)"
+eval "$(/home/soham/anaconda3/bin/conda shell.bash hook)"  ## change here
 
 # Set NPM path explicitly
-export PATH="/home/asadel-ds/.nvm/versions/node/v16.20.0/bin:$PATH"
+export PATH="/home/asadel-ds/.nvm/versions/node/v16.20.0/bin:$PATH" ## change here
 
 # Load NVM environment
 export NVM_DIR="$HOME/.nvm"
@@ -17,7 +17,7 @@ export NVM_DIR="$HOME/.nvm"
 conda activate tf_env 
 
 # Change to the project directory (adjust this path to your project directory)
-cd /home/soham/aiims/my-app/
+cd /home/soham/aiims/my-app/  ## change here
 
 # Function to cleanup background processes
 cleanup() {

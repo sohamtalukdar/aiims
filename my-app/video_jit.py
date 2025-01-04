@@ -13,13 +13,15 @@ import os
 with open("config.json", 'r') as f:
     config = json.load(f)
 
+db_config = config["db_config"]
+
 # Database helpers
 def get_patient_details(patient_id):
     db = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="Bharat@1947",
-        database="aiims"
+        host=db_config["host"],
+        user=db_config["user"],
+        password=db_config["password"],
+        database=db_config["database"]
     )
     cursor = db.cursor(dictionary=True)
     query = "SELECT name, age FROM patient_media WHERE patientId = %s"
@@ -35,10 +37,10 @@ def get_patient_details(patient_id):
 def save_video_result_to_db(patient_id, video_result):
     name, age = get_patient_details(patient_id)
     db = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="Bharat@1947",
-        database="aiims"
+        host=db_config["host"],
+        user=db_config["user"],
+        password=db_config["password"],
+        database=db_config["database"]
     )
     cursor = db.cursor()
     query = """

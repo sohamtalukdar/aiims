@@ -1,9 +1,14 @@
 {
-    "base_url": "http://172.20.10.4:5001",
     "access_token": "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",
     "audio_model": "./aiims_acoustic_24-oct-24_model1_model.keras",
     "video_model": "./aiims_picture_reading_25-oct-24_model1_model.pth",
     "class_labels_path": "./labels.json",
     "scalers_path": "./scalers.json",
-    "parent_folder": "/home/soham/aiims/my-app/data"
+    "parent_folder": "/home/soham/aiims/my-app/data",
+    "db_config": {
+        "host": "localhost",
+        "user": "root",
+        "password": "Bharat@1947",
+        "database": "aiims"
+    }
 }

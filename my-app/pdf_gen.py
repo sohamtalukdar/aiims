@@ -1,13 +1,18 @@
 import pymysql
 import pandas as pd
+import json
 
+with open('./config.json', 'r') as f:
+    config = json.load(f)
+
+db_config = config['db_config']
 # Database connection
 def fetch_model_inference():
     connection = pymysql.connect(
-        host='localhost',
-        user='root',
-        password='Bharat@1947',
-        database='aiims'
+        host=db_config['host'],
+        user=db_config['user'],
+        password=db_config['password'],
+        database=db_config['database']
     )
     cursor = connection.cursor()
     cursor.execute("SELECT * FROM model_inference;")  # Fetch all columns

@@ -18,6 +18,8 @@ import mysql.connector
 with open("./config.json", "r") as f:
     config = json.load(f)
 
+db_config = config["db_config"]
+
 ACCESS_TOKEN = config["access_token"]
 pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1", use_auth_token=ACCESS_TOKEN)
 
@@ -42,10 +44,10 @@ class Attention(Layer):
 
 def get_patient_details(patient_id):
     db = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="Bharat@1947",
-        database="aiims"
+        host=db_config["host"],
+        user=db_config["user"],
+        password=db_config["password"],
+        database=db_config["database"]
     )
     cursor = db.cursor(dictionary=True)
     query = "SELECT name, age FROM patient_media WHERE patientId = %s"
@@ -62,10 +64,10 @@ def get_patient_details(patient_id):
 def save_audio_result_to_db(patient_id, audio_result):
     name, age = get_patient_details(patient_id)
     db = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="Bharat@1947",
-        database="aiims"
+        host=db_config["host"],
+        user=db_config["user"],
+        password=db_config["password"],
+        database=db_config["database"]
     )
     cursor = db.cursor()
     query = """
