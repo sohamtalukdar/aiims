@@ -5,3 +5,4 @@ temp_uploads/
 *.xlsx
 public/audio/
 *.pt
+node_modules/
