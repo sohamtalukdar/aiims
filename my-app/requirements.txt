@@ -2,7 +2,7 @@ tensorflow==2.18.0
 opencv-python
 retina-face
 pydub
-pyannote.audio
+pyannote.audio ## pyannote/speaker-diarization-3.1
 ## cuda==12.6 update 3 (nvcc --version)
 ## cudnn==9.6.0
 ## env -> tf_env(conda)-> python -> 3.9.21
